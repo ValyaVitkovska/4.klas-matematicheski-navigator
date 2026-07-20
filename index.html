@@ -2,970 +2,904 @@
 <html lang="bg">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Супер Математик - 4 клас</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Математически Навигатор</title>
+
+    <meta name="description" content="Интерактивно упражнение по математика с Искри — събиране, изваждане, умножение и деление стъпка по стъпка.">
+    <meta name="theme-color" content="#0f172a">
+
+    <!-- PWA / installability -->
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+    <link rel="shortcut icon" href="favicon.png">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Мат. Навигатор">
+
     <style>
+        :root {
+            --bg-color: #0f172a;
+            --panel-bg: #1e293b;
+            --panel-border: #334155;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent-blue: #3b82f6;
+            --accent-blue-hover: #2563eb;
+            --accent-green: #10b981;
+            --accent-green-hover: #059669;
+            --accent-purple: #8b5cf6;
+            --accent-red: #ef4444;
+            --accent-yellow: #f59e0b;
+            --grid-bg: #ffffff;
+            --grid-line: #cbd5e1;
+
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+
+        html, body { height: 100%; }
+
         body {
-            font-family: 'Inter', sans-serif;
-            overscroll-behavior-y: contain;
-            margin: 0;
-            overflow: hidden;
-            background-color: #1e293b;
-            touch-action: none;
-        }
-        
-        h1, .mario-font {
-            font-family: 'Impact', 'Arial Black', sans-serif;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-        }
-
-        .math-notebook {
-            background-color: white;
-            background-image: 
-                linear-gradient(#93c5fd 1px, transparent 1px),
-                linear-gradient(90deg, #93c5fd 1px, transparent 1px);
-            background-size: 2.5rem 2.5rem;
-            border: 2px solid #3b82f6;
-            border-radius: 8px;
-            padding: 2.5rem;
-            display: grid;
-            grid-template-columns: repeat(20, 2.5rem);
-            grid-auto-rows: 2.5rem;
-            gap: 0;
-            position: relative;
-            box-shadow: inset 0 0 10px rgba(0,0,0,0.05);
-            max-width: 100%;
-            overflow-x: auto;
-        }
-
-        .math-cell {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            height: 100vh;
+            height: 100dvh;
             display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.5rem;
-            font-weight: bold;
-            color: #0f172a;
-            position: relative;
+            flex-direction: column;
+            overflow: hidden;
+            touch-action: manipulation;
         }
 
-        .math-input {
-            width: 100%;
-            height: 100%;
-            border: none;
-            background-color: rgba(226, 232, 240, 0.4);
-            text-align: center;
-            font-size: 1.5rem;
-            font-weight: bold;
-            color: #1d4ed8;
-            outline: 1px dashed rgba(148, 163, 184, 0.8);
-            outline-offset: -2px;
-            padding: 0;
-            margin: 0;
-            cursor: text;
-            position: relative;
-            z-index: 20;
+        #app-container { flex: 1; min-height: 0; position: relative; display: flex; flex-direction: column; }
+
+        .screen { display: none; flex-direction: column; height: 100%; width: 100%; max-width: 1000px; margin: 0 auto; padding: 1rem; position: relative; min-height: 0; }
+        .screen.active { display: flex; }
+
+        .header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 1rem; border-bottom: 2px solid var(--panel-border); margin-bottom: 1rem; }
+        .energy-bar { display: flex; align-items: center; gap: 0.5rem; font-weight: bold; color: var(--accent-yellow); font-size: 1.2rem; }
+        .energy-cell { width: 16px; height: 16px; background: var(--accent-yellow); border-radius: 4px; box-shadow: 0 0 8px var(--accent-yellow); }
+
+        .btn {
+            background: var(--accent-blue); color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 0.75rem;
+            font-size: 1.1rem; font-weight: bold; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 0 rgba(0,0,0,0.2);
+            display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
+        }
+        .btn:active { transform: translateY(4px); box-shadow: 0 0 0 rgba(0,0,0,0); }
+        .btn-green { background: var(--accent-green); }
+        .btn-purple { background: var(--accent-purple); }
+        .btn-outline { background: transparent; border: 2px solid var(--panel-border); color: var(--text-main); box-shadow: none; }
+        .btn-outline:active { background: var(--panel-border); transform: none; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; pointer-events: none; }
+
+        .iskri-container { display: flex; align-items: flex-start; gap: 1rem; margin-bottom: 1rem; background: var(--panel-bg); padding: 1rem; border-radius: 1rem; border: 1px solid var(--panel-border); }
+        .iskri-avatar { font-size: 3rem; animation: float 3s ease-in-out infinite; text-shadow: 0 0 15px rgba(59, 130, 246, 0.5); }
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+        .iskri-bubble { flex: 1; background: var(--bg-color); padding: 1rem; border-radius: 1rem; border: 1px solid var(--accent-blue); position: relative; font-size: 1.1rem; line-height: 1.4; min-height: 60px;}
+        .iskri-bubble::before { content: ''; position: absolute; left: -10px; top: 15px; border-width: 10px 10px 10px 0; border-style: solid; border-color: transparent var(--accent-blue) transparent transparent; }
+
+        .workspace { flex: 1; display: flex; flex-direction: column; min-height: 0; gap: 1rem; }
+        .math-area { flex: 1; background: var(--grid-bg); border-radius: 1rem; padding: 1rem; overflow: auto; display: flex; justify-content: center; align-items: center; position: relative; }
+
+        .math-grid {
+            display: grid;
+            gap: 0;
+            background-color: var(--grid-bg);
+            background-image: linear-gradient(var(--grid-line) 1px, transparent 1px), linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+            background-size: 40px 40px;
+            background-position: 0 0;
+            padding: 40px;
+            border: 2px solid var(--accent-blue);
+            border-radius: 8px;
+            box-shadow: inset 0 0 15px rgba(0,0,0,0.05);
         }
 
-        .math-input:focus {
-            background-color: #dbeafe;
-            outline: 2px solid #3b82f6;
-            outline-offset: -2px;
+        .m-cell {
+            width: 40px; height: 40px; display: flex; justify-content: center; align-items: center;
+            font-size: 1.8rem; font-weight: bold; color: #0f172a; position: relative; font-family: monospace;
         }
 
-        .math-input.error {
-            color: #ef4444;
-            background-color: #fee2e2;
-        }
-
-        .math-input.carry-over {
-            height: 1.5rem;
-            width: 1.5rem;
-            font-size: 0.9rem;
-            margin: auto;
-            border-radius: 50%;
-            outline: 1px solid #94a3b8;
-            background: #f8fafc;
-            color: #64748b;
-        }
-
-        .math-line {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            height: 2px;
-            background-color: #0f172a;
+        .m-input {
+            width: 38px; height: 38px; border: 2px dashed #94a3b8; background: rgba(248, 250, 252, 0.85); border-radius: 4px;
+            display: flex; justify-content: center; align-items: center; cursor: pointer; color: var(--accent-blue);
             z-index: 5;
-            pointer-events: none; /* Пропуска кликовете през чертата */
         }
+        .m-input.active { border-color: var(--accent-blue); background: #eff6ff; box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.4); }
+        .m-input.error { border-color: var(--accent-red); color: var(--accent-red); background: #fef2f2; }
+        .m-input.success { border-color: var(--accent-green); color: var(--accent-green); border-style: solid; }
+
+        .m-carry {
+            width: 24px; height: 24px; font-size: 1rem; border: 1px solid #cbd5e1; border-radius: 50%;
+            margin: auto; background: white; cursor: pointer; color: #64748b;
+            display: flex; justify-content: center; align-items: center; z-index: 5;
+        }
+        .m-carry.active { border-color: var(--accent-blue); background: #eff6ff; }
+
+        .m-line { position: absolute; bottom: 0; left: 0; width: 100%; height: 3px; background: #0f172a; z-index: 10; }
 
         .has-dot::before {
-            content: '';
-            position: absolute;
-            top: -6px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 8px;
-            height: 8px;
-            background-color: #ef4444;
-            border-radius: 50%;
-            z-index: 20;
-            pointer-events: none;
+            content: ''; position: absolute; top: -4px; left: 50%; transform: translateX(-50%);
+            width: 6px; height: 6px; background-color: var(--accent-red); border-radius: 50%;
         }
 
-        .pop-anim { animation: pop 0.3s ease; }
-        @keyframes pop { 0% { transform: scale(1); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
+        .controls-area { display: flex; gap: 1rem; padding: 0.5rem 0; }
+        .numpad { display: grid; grid-template-columns: repeat(6, 1fr); gap: 0.5rem; flex: 1; }
+        .num-key { background: var(--panel-bg); color: white; border: 2px solid var(--panel-border); border-radius: 0.5rem; font-size: 1.5rem; font-weight: bold; padding: 0.75rem 0; cursor: pointer; }
+        .num-key:active { background: var(--accent-blue); border-color: var(--accent-blue); }
 
-        canvas {
-            image-rendering: pixelated;
-            display: block;
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
+        .action-panel { display: flex; flex-direction: column; gap: 0.5rem; width: 120px; }
+
+        .choice-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem; }
+        .choice-btn { background: var(--panel-bg); padding: 1.5rem; border: 2px solid var(--panel-border); border-radius: 1rem; font-size: 1.2rem; color: white; cursor: pointer; transition: all 0.2s; }
+        .choice-btn:hover { border-color: var(--accent-blue); }
+        .choice-btn.selected { background: var(--accent-blue); border-color: var(--accent-blue); }
+
+        .hidden-visually { opacity: 0; pointer-events: none; height: 0; margin: 0; padding: 0; overflow: hidden; }
+
+        /* Start screen: scrollable form + pinned, always-reachable CTA */
+        .start-scroll { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 1.25rem; max-width: 500px; margin: 0 auto; width: 100%; padding: 0.25rem 0.1rem 1rem; -webkit-overflow-scrolling: touch; }
+        .start-cta { flex: 0 0 auto; max-width: 500px; margin: 0 auto; width: 100%; display: flex; flex-direction: column; gap: 0.5rem; padding-top: 0.75rem; }
+        .btn-cta {
+            width: 100%; padding: 1.25rem; font-size: 1.4rem; border-radius: 1rem;
+            animation: cta-glow 2.4s ease-in-out infinite;
         }
-        
-        #threeCanvasContainer {
-            width: 100%;
-            max-width: 200px;
-            height: 200px;
-            min-height: 200px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto;
+        @keyframes cta-glow {
+            0%, 100% { box-shadow: 0 4px 0 rgba(0,0,0,0.2), 0 0 0 rgba(16,185,129,0.55); }
+            50% { box-shadow: 0 4px 0 rgba(0,0,0,0.2), 0 0 22px rgba(16,185,129,0.75); }
+        }
+
+        /* Discreet corner logo — visible everywhere except during active gameplay */
+        .corner-logo {
+            position: absolute; right: 10px; bottom: 8px; width: 32px; height: 32px;
+            opacity: 0.45; pointer-events: none; z-index: 1; user-select: none;
+        }
+        body[data-screen="screen-game"] .corner-logo { display: none; }
+
+        /* Author credit footer */
+        #site-footer {
+            flex: 0 0 auto; text-align: center; font-size: 0.65rem; line-height: 1.35;
+            color: var(--text-muted); padding: 0.35rem 1rem calc(0.35rem + env(safe-area-inset-bottom, 0px));
+            border-top: 1px solid var(--panel-border); background: var(--bg-color);
+        }
+
+        /* Parent Screen */
+        .stat-row { display: flex; justify-content: space-between; padding: 0.75rem; border-bottom: 1px solid var(--panel-border); }
+        .stat-row:last-child { border: none; }
+
+        /* --- Responsive tuning: phone / tablet / laptop --- */
+
+        /* Small phones */
+        @media (max-width: 380px) {
+            .numpad { grid-template-columns: repeat(5, 1fr); }
+            .controls-area { flex-direction: column; }
+            .action-panel { flex-direction: row; width: 100%; }
+            .action-panel .btn { flex: 1; }
+            .math-grid { transform: scale(0.65); transform-origin: top center; }
+            .iskri-bubble { font-size: 0.95rem; }
+            .iskri-avatar { font-size: 2.2rem; }
+            #site-footer { font-size: 0.58rem; }
+        }
+
+        /* Phones */
+        @media (min-width: 381px) and (max-width: 600px) {
+            .numpad { grid-template-columns: repeat(5, 1fr); }
+            .choice-grid { grid-template-columns: 1fr; }
+            .math-grid { transform: scale(0.8); transform-origin: top center; }
+            .iskri-bubble { font-size: 1rem; }
+            .iskri-avatar { font-size: 2.5rem; }
+        }
+
+        /* Tablets */
+        @media (min-width: 601px) and (max-width: 900px) {
+            .math-grid { transform: scale(0.95); transform-origin: top center; }
+            .num-key { font-size: 1.6rem; padding: 0.9rem 0; }
+        }
+
+        /* Laptops / desktops */
+        @media (min-width: 901px) {
+            .screen { max-width: 1100px; }
+            .math-grid { transform: scale(1.1); transform-origin: center; }
+            .num-key { font-size: 1.7rem; padding: 1rem 0; }
+            .btn { font-size: 1.15rem; }
+        }
+
+        /* Short / landscape viewports: keep controls reachable, shrink chrome */
+        @media (max-height: 480px) {
+            .iskri-container { padding: 0.5rem; margin-bottom: 0.5rem; }
+            .iskri-avatar { font-size: 2rem; }
+            .iskri-bubble { padding: 0.5rem; min-height: 40px; font-size: 0.9rem; }
+            #site-footer { padding: 0.15rem 1rem; font-size: 0.55rem; }
+            .corner-logo { width: 22px; height: 22px; }
         }
     </style>
 </head>
 <body>
-    <div id="ui-layer" class="absolute top-0 left-0 w-full p-4 flex justify-between items-start pointer-events-none z-10">
-        <div class="text-white mario-font text-2xl drop-shadow-md">
-            <div class="text-yellow-400">МОНЕТИ / ТРУДНОСТ</div>
-            <div class="flex items-center gap-2">
-                <div class="w-6 h-6 bg-yellow-400 rounded-full border-2 border-yellow-600 flex items-center justify-center text-xs">🪙</div>
-                <span id="scoreDisplay">0</span>
-            </div>
-        </div>
-        <div class="text-white mario-font text-2xl drop-shadow-md text-right">
-            <div class="text-blue-300">НИВО</div>
-            <div id="levelDisplay">1 - НОВАК</div>
-        </div>
-    </div>
 
-    <div id="startScreen" class="absolute inset-0 bg-slate-900 flex items-center justify-center z-50 p-2 md:p-4 overflow-y-auto">
-        <div class="bg-white rounded-2xl shadow-2xl overflow-hidden max-w-5xl w-full flex flex-col m-auto">
-            <div class="bg-blue-600 p-4 md:p-6 text-center flex-none min-h-[80px] flex items-center justify-center">
-                <h1 class="text-3xl md:text-5xl text-white drop-shadow-md mario-font leading-tight">СУПЕР МАТЕМАТИКА</h1>
-            </div>
-            
-            <div class="flex-1 flex flex-col md:flex-row items-stretch p-4 md:p-8 gap-6 md:gap-10">
-                <div class="flex flex-col items-center justify-center gap-6 w-full md:w-1/3 flex-none">
-                    <div id="threeCanvasContainer" class="bg-blue-50 rounded-2xl border-4 border-blue-200 shadow-inner w-full">
-                        <div style="font-size: 80px;" id="heroFallback">🦸‍♂️</div>
-                    </div>
-                    
-                    <div class="bg-slate-50 p-4 rounded-xl border-2 border-slate-200 text-center w-full shadow-sm">
-                        <div class="font-bold text-slate-700 mb-3 text-lg mario-font">УПРАВЛЕНИЕ</div>
-                        <div class="flex flex-col gap-3">
-                            <div class="flex items-center justify-center gap-2">
-                                <kbd class="px-3 py-1 bg-white border border-slate-300 rounded shadow-sm text-slate-700 font-bold">◀</kbd>
-                                <kbd class="px-3 py-1 bg-white border border-slate-300 rounded shadow-sm text-slate-700 font-bold">▶</kbd>
-                                <span class="text-slate-500 font-medium ml-2 text-sm md:text-base">Движение</span>
-                            </div>
-                            <div class="flex items-center justify-center gap-2">
-                                <kbd class="px-3 py-1 bg-white border border-slate-300 rounded shadow-sm text-slate-700 font-bold text-xs md:text-sm">SPACE / НАГОРЕ</kbd>
-                                <span class="text-slate-500 font-medium ml-2 text-sm md:text-base">Скок</span>
-                            </div>
-                        </div>
-                    </div>
+    <div id="app-container">
+
+    <div id="screen-start" class="screen active">
+        <div class="header" style="justify-content: center;">
+            <h1 style="color: var(--accent-blue); text-align: center; text-transform: uppercase; letter-spacing: 2px;">Математически Навигатор</h1>
+        </div>
+
+        <div class="start-scroll">
+            <div class="iskri-container" style="flex-direction: column; align-items: center; text-align: center;">
+                <div class="iskri-avatar" style="font-size: 5rem;">🤖</div>
+                <div class="iskri-bubble" style="width: 100%;">
+                    Здравей! Аз съм Искри. Готов ли си за мисия? Как се казваш?
                 </div>
+                <input type="text" id="playerName" placeholder="Твоето име" style="width: 100%; padding: 1rem; border-radius: 0.5rem; border: 2px solid var(--panel-border); background: var(--bg-color); color: white; font-size: 1.2rem; text-align: center;">
+            </div>
 
-                <div class="w-full md:w-2/3 flex flex-col justify-center space-y-4 md:space-y-6">
-                    <h2 class="font-black text-red-600 text-2xl md:text-3xl">Здравей! Аз съм Супер Математик!</h2>
-                    <p class="text-slate-600 font-medium text-base md:text-lg">За да преминем нивата в 4. клас, трябва да решаваме задачи!</p>
-                    
-                    <div class="space-y-4 bg-slate-50 p-4 md:p-6 rounded-xl border-2 border-slate-200 shadow-sm text-base md:text-lg">
-                        <div class="flex items-start gap-4">
-                            <span class="text-3xl shrink-0">🟨</span>
-                            <span class="text-slate-700 mt-1">Удари <strong class="text-yellow-600">Жълто блокче</strong> отдолу за <strong>задача за Умножение</strong>.</span>
-                        </div>
-                        <div class="flex items-start gap-4">
-                            <span class="text-3xl shrink-0">🍄</span>
-                            <span class="text-slate-700 mt-1">Сблъскай се с <strong class="text-amber-800">Гъба</strong> за <strong>задача за Деление с опашка</strong>.</span>
-                        </div>
-                        <div class="flex items-start gap-4">
-                            <span class="text-3xl shrink-0">🔴</span>
-                            <span class="text-slate-700 mt-1"><strong>Кликни върху цифра</strong> от условието, за да поставиш <strong>червена точка</strong> (когато заемаш).</span>
-                        </div>
-                    </div>
+            <div style="background: var(--panel-bg); padding: 1.5rem; border-radius: 1rem;">
+                <h3 style="margin-bottom: 1rem; text-align: center;">Избери Ниво</h3>
+                <select id="levelSelect" style="width: 100%; padding: 1rem; border-radius: 0.5rem; background: var(--bg-color); color: white; border: 2px solid var(--panel-border); font-size: 1.1rem;">
+                    <option value="1">Ниво 1: Разбери действието (+, - до 20)</option>
+                    <option value="2">Ниво 2: Сигурни десетици (+, - до 100)</option>
+                    <option value="3">Ниво 3: Майстор на разредите (+, - до 1000)</option>
+                    <option value="4">Ниво 4: Силна таблица (*, :)</option>
+                    <option value="5">Ниво 5: Писмено умножение</option>
+                    <option value="6">Ниво 6: Деление с навигатор</option>
+                    <option value="7">Ниво 7: Самостоятелна мисия</option>
+                </select>
+            </div>
 
-                    <p class="bg-purple-100 text-purple-800 p-3 rounded-lg font-bold text-center border-2 border-purple-200 text-sm md:text-base mt-auto">
-                        След 50 монети идват задачи с двуцифрени числа!
-                    </p>
+            <div style="background: var(--panel-bg); padding: 1.5rem; border-radius: 1rem;">
+                <h3 style="margin-bottom: 1rem; text-align: center;">Режим на помощ</h3>
+                <div style="display: flex; gap: 0.5rem;">
+                    <button class="choice-btn mode-btn selected" data-mode="navigator" style="flex:1; padding: 1rem; font-size:1rem;">С Навигатор</button>
+                    <button class="choice-btn mode-btn" data-mode="hint" style="flex:1; padding: 1rem; font-size:1rem;">С Подсказка</button>
+                    <button class="choice-btn mode-btn" data-mode="solo" style="flex:1; padding: 1rem; font-size:1rem;">Самостоятелно</button>
                 </div>
             </div>
+        </div>
 
-            <div class="p-4 md:p-6 bg-slate-100 border-t-2 flex-none">
-                <button id="startBtn" class="w-full py-4 md:py-5 bg-green-500 hover:bg-green-600 text-white text-2xl md:text-3xl mario-font rounded-xl shadow-[0_8px_0_#16a34a] active:shadow-[0_0px_0_#16a34a] active:translate-y-[8px] transition-all">
-                    🎮 СТАРТ ИГРА
-                </button>
+        <div class="start-cta">
+            <button class="btn btn-green btn-cta" id="btn-start">🚀 ЗАПОЧНИ МИСИЯ</button>
+            <button id="btn-settings" style="background:transparent; border:none; color:var(--text-muted); padding:0.6rem; cursor:pointer;">⚙️ Настройки (задръж)</button>
+        </div>
+
+        <img class="corner-logo" src="logo-vb.png" alt="" aria-hidden="true">
+    </div>
+
+    <div id="screen-game" class="screen">
+        <div class="header">
+            <button class="btn btn-outline" id="btn-home">🏠 Начало</button>
+            <div class="energy-bar" id="energy-display">
+                ⚡ <span id="energy-count">0</span>
+            </div>
+            <button class="btn btn-outline" id="btn-sound">🔊</button>
+        </div>
+
+        <div class="iskri-container">
+            <div class="iskri-avatar">🤖</div>
+            <div class="iskri-bubble" id="iskri-text">Анализирам задачата...</div>
+        </div>
+
+        <div class="workspace">
+            <div class="math-area" id="math-area">
+                <!-- Grid renders here -->
+                <div id="grid-container" class="math-grid hidden-visually"></div>
+
+                <!-- dynamic choice UI renders here (e.g. choose operation) -->
+                <div id="dynamic-choices" class="choice-grid"></div>
+            </div>
+
+            <div class="controls-area hidden-visually" id="controls-area">
+                <div class="numpad" id="numpad">
+                    <button class="num-key">1</button><button class="num-key">2</button><button class="num-key">3</button>
+                    <button class="num-key">4</button><button class="num-key">5</button><button class="num-key">6</button>
+                    <button class="num-key">7</button><button class="num-key">8</button><button class="num-key">9</button>
+                    <button class="num-key" style="grid-column: span 2;">0</button>
+                    <button class="num-key" id="btn-del">⌫</button>
+                </div>
+                <div class="action-panel">
+                    <button class="btn btn-purple" id="btn-hint">❓ Помощ</button>
+                    <button class="btn btn-green" id="btn-check" style="flex:1;">✅ Провери</button>
+                </div>
             </div>
         </div>
     </div>
 
-    <div id="mathModal" class="hidden absolute inset-0 bg-slate-900/95 z-40 flex items-center justify-center p-4 opacity-0 transition-opacity duration-300">
-        <div class="bg-slate-50 rounded-xl max-w-5xl w-full shadow-2xl flex flex-col max-h-[95vh]">
-            <div class="bg-slate-800 p-4 rounded-t-xl flex justify-between items-center text-white shrink-0">
-                <h2 id="mathTitle" class="text-2xl mario-font text-yellow-400">ЗАДАЧА</h2>
-            </div>
-            
-            <div class="p-4 bg-blue-100 border-b border-blue-200 text-slate-700 font-medium text-lg text-center shrink-0" id="mathInstruction">
-                Реши задачата.
+    <div id="screen-parent" class="screen">
+        <div class="header">
+            <h2 style="color:var(--accent-purple)">Панел за възрастни</h2>
+            <button class="btn btn-outline" id="btn-parent-close">❌ Затвори</button>
+        </div>
+        <div style="background: var(--panel-bg); padding: 1.5rem; border-radius: 1rem; flex:1; overflow-y:auto;">
+            <div class="stat-row"><span>Име:</span><strong id="stat-name">-</strong></div>
+            <div class="stat-row"><span>Решени задачи:</span><strong id="stat-tasks">0</strong></div>
+            <div class="stat-row"><span>Разпознати действия:</span><strong id="stat-ops">0</strong></div>
+            <div class="stat-row"><span>Правилни стъпки:</span><strong id="stat-steps">0</strong></div>
+            <div class="stat-row"><span>Самостоятелни поправки:</span><strong id="stat-fixes">0</strong></div>
+            <div class="stat-row"><span>Използвани подсказки:</span><strong id="stat-hints">0</strong></div>
+            <div class="stat-row">
+                <span>Чести грешки:</span>
+                <div id="stat-errors" style="color:var(--accent-red); text-align:right;">-</div>
             </div>
 
-            <div class="p-4 md:p-8 overflow-auto flex justify-center items-start bg-slate-200 flex-1">
-                <div id="mathContainer" class="math-notebook"></div>
-            </div>
-
-            <div class="p-4 bg-slate-100 rounded-b-xl shrink-0">
-                <button id="checkBtn" class="w-full py-4 bg-green-500 hover:bg-green-600 text-white text-2xl mario-font rounded-xl shadow-[0_6px_0_#16a34a] active:shadow-[0_0px_0_#16a34a] active:translate-y-[6px] transition-all">
-                    ✅ ПРОВЕРИ
-                </button>
+            <div style="margin-top: 2rem; display: flex; gap: 1rem;">
+                <button class="btn btn-outline" id="btn-reset-stats" style="flex:1; border-color:var(--accent-red); color:var(--accent-red);">Нулирай статистика</button>
+                <button class="btn btn-outline" id="btn-unlock-all" style="flex:1;">Отключи всички нива</button>
             </div>
         </div>
+        <img class="corner-logo" src="logo-vb.png" alt="" aria-hidden="true">
     </div>
 
-    <canvas id="gameCanvas"></canvas>
+    </div><!-- /app-container -->
 
-    <div style="position:fixed;bottom:0;left:0;width:100%;display:flex;justify-content:center;z-index:60;pointer-events:none;padding-bottom:4px;">
-        <div style="max-width:calc(100% - 70px);background:rgba(15,23,42,0.45);color:rgba(255,255,255,0.75);font-family:Arial, sans-serif;font-size:10px;line-height:1.3;text-align:center;padding:3px 10px;border-radius:8px;">
-            Ресурсът е създаден по идея и методическа разработка на Валя Витковска с техническа помощ от изкуствен интелект. Съдържанието е проверено и редактирано от автора.
-        </div>
-    </div>
-
-    <img src="author-logo.png" alt="Логo" style="position:fixed;bottom:6px;right:8px;width:30px;height:30px;opacity:0.65;z-index:61;pointer-events:none;">
+    <footer id="site-footer">
+        Ресурсът е създаден по идея и методическа разработка на Валя Витковска с техническа помощ от изкуствен интелект. Съдържанието е проверено и редактирано от автора.
+    </footer>
 
     <script>
-        function init3D() {
-            try {
-                const container = document.getElementById('threeCanvasContainer');
-                if (!container || typeof THREE === 'undefined') return;
-                
-                let modelW = 200;
-                let modelH = 200;
-
-                const scene = new THREE.Scene();
-                const camera = new THREE.PerspectiveCamera(45, modelW / modelH, 0.1, 1000);
-                const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
-                renderer.setSize(modelW, modelH);
-                
-                container.innerHTML = ''; 
-                container.appendChild(renderer.domElement);
-
-                const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
-                scene.add(ambientLight);
-                const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
-                dirLight.position.set(5, 5, 5);
-                scene.add(dirLight);
-
-                const group = new THREE.Group();
-
-                // Материали
-                const redMat = new THREE.MeshLambertMaterial({ color: 0xff0000 });
-                const blueMat = new THREE.MeshLambertMaterial({ color: 0x0000ff });
-                const skinMat = new THREE.MeshLambertMaterial({ color: 0xffcc99 });
-                const brownMat = new THREE.MeshLambertMaterial({ color: 0x654321 });
-                const blackMat = new THREE.MeshLambertMaterial({ color: 0x222222 });
-                const yellowMat = new THREE.MeshLambertMaterial({ color: 0xffff00 });
-
-                // Крака
-                const legGeo = new THREE.BoxGeometry(0.35, 0.6, 0.35);
-                const leftLeg = new THREE.Mesh(legGeo, blueMat); leftLeg.position.set(-0.25, 0.3, 0);
-                const rightLeg = new THREE.Mesh(legGeo, blueMat); rightLeg.position.set(0.25, 0.3, 0);
-                group.add(leftLeg, rightLeg);
-
-                // Обувки
-                const shoeGeo = new THREE.BoxGeometry(0.4, 0.2, 0.5);
-                const leftShoe = new THREE.Mesh(shoeGeo, brownMat); leftShoe.position.set(-0.25, 0.1, 0.05);
-                const rightShoe = new THREE.Mesh(shoeGeo, brownMat); rightShoe.position.set(0.25, 0.1, 0.05);
-                group.add(leftShoe, rightShoe);
-
-                // Гащеризон
-                const overallsGeo = new THREE.BoxGeometry(1.05, 0.5, 0.6);
-                const overalls = new THREE.Mesh(overallsGeo, blueMat); overalls.position.set(0, 0.75, 0);
-                group.add(overalls);
-
-                // Копчета
-                const btnGeo = new THREE.BoxGeometry(0.15, 0.15, 0.1);
-                const leftBtn = new THREE.Mesh(btnGeo, yellowMat); leftBtn.position.set(-0.3, 0.9, 0.31);
-                const rightBtn = new THREE.Mesh(btnGeo, yellowMat); rightBtn.position.set(0.3, 0.9, 0.31);
-                group.add(leftBtn, rightBtn);
-
-                // Блуза
-                const shirtGeo = new THREE.BoxGeometry(1.0, 0.6, 0.55);
-                const shirt = new THREE.Mesh(shirtGeo, redMat); shirt.position.set(0, 1.2, 0);
-                group.add(shirt);
-
-                // Ръкави и ръце
-                const armGeo = new THREE.BoxGeometry(0.3, 0.6, 0.3);
-                const leftArm = new THREE.Mesh(armGeo, redMat); leftArm.position.set(-0.65, 1.1, 0);
-                const rightArm = new THREE.Mesh(armGeo, redMat); rightArm.position.set(0.65, 1.1, 0);
-                const handGeo = new THREE.BoxGeometry(0.3, 0.3, 0.3);
-                const leftHand = new THREE.Mesh(handGeo, skinMat); leftHand.position.set(-0.65, 0.65, 0);
-                const rightHand = new THREE.Mesh(handGeo, skinMat); rightHand.position.set(0.65, 0.65, 0);
-                group.add(leftArm, rightArm, leftHand, rightHand);
-
-                // Глава
-                const headGeo = new THREE.BoxGeometry(0.8, 0.8, 0.8);
-                const head = new THREE.Mesh(headGeo, skinMat); head.position.set(0, 1.8, 0);
-                group.add(head);
-
-                // Лице (нос, мустак, очи)
-                const noseGeo = new THREE.BoxGeometry(0.3, 0.25, 0.3);
-                const nose = new THREE.Mesh(noseGeo, skinMat); nose.position.set(0, 1.75, 0.45);
-                const mustacheGeo = new THREE.BoxGeometry(0.6, 0.15, 0.1);
-                const mustache = new THREE.Mesh(mustacheGeo, blackMat); mustache.position.set(0, 1.6, 0.45);
-                const eyeGeo = new THREE.BoxGeometry(0.1, 0.2, 0.1);
-                const leftEye = new THREE.Mesh(eyeGeo, blackMat); leftEye.position.set(-0.15, 1.9, 0.41);
-                const rightEye = new THREE.Mesh(eyeGeo, blackMat); rightEye.position.set(0.15, 1.9, 0.41);
-                group.add(nose, mustache, leftEye, rightEye);
-
-                // Шапка
-                const hatGeo = new THREE.BoxGeometry(0.85, 0.25, 0.85);
-                const hat = new THREE.Mesh(hatGeo, redMat); hat.position.set(0, 2.3, 0);
-                const visorGeo = new THREE.BoxGeometry(0.85, 0.1, 0.4);
-                const visor = new THREE.Mesh(visorGeo, redMat); visor.position.set(0, 2.2, 0.4);
-                group.add(hat, visor);
-
-                scene.add(group);
-                
-                group.position.y = -1.2;
-                camera.position.z = 5.5;
-
-                let animationFrameId;
-                const animate3D = function () {
-                    animationFrameId = requestAnimationFrame(animate3D);
-                    group.rotation.y += 0.02; 
-                    renderer.render(scene, camera);
-                };
-                animate3D();
-
-                document.getElementById('startBtn').addEventListener('click', () => {
-                    cancelAnimationFrame(animationFrameId);
-                });
-            } catch (e) {
-                console.error("ThreeJS грешка:", e);
-            }
-        }
-
-        const SoundFX = {
-            initialized: false,
-            init: async function() {
-                if (this.initialized) return;
-                await Tone.start();
-                
-                this.synth = new Tone.Synth({
-                    oscillator: { type: "square" },
-                    envelope: { attack: 0.01, decay: 0.2, sustain: 0, release: 0.1 }
-                }).toDestination();
-
-                this.coinSynth = new Tone.Synth({
-                    oscillator: { type: "sine" },
-                    envelope: { attack: 0.01, decay: 0.3, sustain: 0, release: 0.1 }
-                }).toDestination();
-
-                this.errorSynth = new Tone.Synth({
-                    oscillator: { type: "sawtooth" },
-                    envelope: { attack: 0.01, decay: 0.3, sustain: 0, release: 0.2 }
-                }).toDestination();
-
-                this.initialized = true;
+        const Storage = {
+            data: {
+                name: "", unlockedLevels: 1, energy: 0,
+                stats: { tasks: 0, ops: 0, steps: 0, fixes: 0, hints: 0, errors: {} }
             },
-            playCoin: function() {
-                if(!this.initialized) return;
-                let now = Tone.now();
-                this.coinSynth.triggerAttackRelease("B5", "32n", now);
-                this.coinSynth.triggerAttackRelease("E6", "8n", now + 0.1);
+            load: function() {
+                try {
+                    let d = localStorage.getItem('MathNavData');
+                    if(d) this.data = { ...this.data, ...JSON.parse(d) };
+                } catch(e) { console.error("Storage load error", e); }
             },
-            playJump: function() {
-                if(!this.initialized) return;
-                this.synth.triggerAttackRelease("C4", "8n");
-                this.synth.oscillator.frequency.setValueAtTime("C4", Tone.now());
-                this.synth.oscillator.frequency.exponentialRampToValueAtTime("C5", Tone.now() + 0.1);
+            save: function() {
+                localStorage.setItem('MathNavData', JSON.stringify(this.data));
             },
-            playBump: function() {
-                if(!this.initialized) return;
-                this.errorSynth.triggerAttackRelease("G2", "16n");
-            },
-            playEnemy: function() {
-                if(!this.initialized) return;
-                this.errorSynth.triggerAttackRelease("C2", "8n");
-            },
-            playSuccess: function() {
-                if(!this.initialized) return;
-                let now = Tone.now();
-                this.synth.triggerAttackRelease("C5", "16n", now);
-                this.synth.triggerAttackRelease("E5", "16n", now + 0.1);
-                this.synth.triggerAttackRelease("G5", "16n", now + 0.2);
-                this.synth.triggerAttackRelease("C6", "8n", now + 0.3);
-            },
-            playError: function() {
-                if(!this.initialized) return;
-                let now = Tone.now();
-                this.errorSynth.triggerAttackRelease("C3", "16n", now);
-                this.errorSynth.triggerAttackRelease("G2", "8n", now + 0.15);
+            logError: function(type) {
+                this.data.stats.errors[type] = (this.data.stats.errors[type] || 0) + 1;
+                this.save();
             }
         };
 
-        const MathGen = {
-            createDivision: function(dividend, divisor, requireCalc) {
-                let cells = [];
-                let divStr = dividend.toString();
-                let quotient = (dividend / divisor).toString();
-                
-                let qStartCol = divStr.length + 5;
-                let row = 2;
-                let step = 1;
-
-                // Ред 2: Условие (напр. 156 : 3 = )
-                for(let i=0; i<divStr.length; i++) cells.push({row: 2, col: 2+i, text: divStr[i], isCondition: true});
-                cells.push({row: 2, col: 2+divStr.length, text: ':'});
-                cells.push({row: 2, col: 3+divStr.length, text: divisor.toString(), isCondition: true});
-                cells.push({row: 2, col: 4+divStr.length, text: '='});
-                
-                // Генериране на всички полета за отговора (частното) на един път, за да са винаги достъпни
-                for(let i=0; i<quotient.length; i++) {
-                    cells.push({row: 2, col: qStartCol + i, input: true, expected: quotient[i], isAnswer: true, tabIndex: step++});
-                }
-
-                let currentVal = "";
-                let qIndex = 0;
-                let isFirstStep = true;
-
-                for(let i = 0; i < divStr.length; i++) {
-                    currentVal += divStr[i];
-                    let val = parseInt(currentVal);
-                    
-                    if (val >= divisor || (!isFirstStep && qIndex < quotient.length)) {
-                        let qDigit = parseInt(quotient[qIndex] || "0");
-                        let subVal = (qDigit * divisor).toString();
-                        
-                        let startCol = 2 + i - currentVal.length + 1;
-                        let endCol = 2 + i;
-                        
-                        row++;
-                        cells.push({row: row, col: startCol - 1, text: '-'});
-                        
-                        for(let j=0; j<subVal.length; j++) {
-                            let col = endCol - subVal.length + 1 + j;
-                            if (requireCalc) {
-                                cells.push({row: row, col: col, input: true, expected: subVal[j], tabIndex: step++});
-                            } else {
-                                cells.push({row: row, col: col, text: subVal[j]});
-                            }
-                        }
-                        
-                        cells.push({row: row, col: endCol - subVal.length + 1, isLine: true, span: subVal.length});
-                        
-                        let rem = val - (qDigit * divisor);
-                        let remStr = rem.toString();
-                        
-                        if (rem === 0 && i === divStr.length - 1) {
-                            row++;
-                            cells.push({row: row, col: endCol, input: true, expected: '0', tabIndex: step++});
-                        } else if (rem > 0 || i < divStr.length - 1) {
-                            row++;
-                            let rCol = endCol;
-                            for(let j=remStr.length-1; j>=0; j--) {
-                                cells.push({row: row, col: rCol, input: true, expected: remStr[j], tabIndex: step++});
-                                rCol--;
-                            }
-                        }
-
-                        if (i < divStr.length - 1) {
-                            let bringDown = divStr[i+1];
-                            cells.push({row: row, col: endCol + 1, input: true, expected: bringDown, tabIndex: step++});
-                        }
-
-                        currentVal = remStr === "0" ? "" : remStr;
-                        isFirstStep = false;
-                        qIndex++;
-                    } else if (!isFirstStep && i < divStr.length - 1) {
-                        qIndex++;
-                        let nextBringDown = divStr[i+1];
-                        cells.push({row: row, col: 2 + i + 1, input: true, expected: nextBringDown, tabIndex: step++});
-                    }
-                }
-                return cells;
-            },
-
-            createMultiplication: function(num1, num2) {
-                let cells = [];
-                let str1 = num1.toString();
-                let str2 = num2.toString();
-                let ans = (num1 * num2).toString();
-                
-                let startCol = 4;
-                let step = 1;
-
-                // Ред 1: Полета "Наум"
-                for(let i=0; i<str1.length; i++) {
-                    cells.push({row: 1, col: startCol + i, input: true, isCarry: true, expected: ''});
-                }
-                
-                // Ред 2: Условие
-                for(let i=0; i<str1.length; i++) cells.push({row: 2, col: startCol + i, text: str1[i], isCondition: true});
-                
-                let dotCol = startCol + str1.length;
-                cells.push({row: 2, col: dotCol, text: '•'}); 
-                
-                let startCol2 = dotCol + 1;
-                for(let i=0; i<str2.length; i++) cells.push({row: 2, col: startCol2 + i, text: str2[i], isCondition: true});
-                
-                let totalLen = str1.length + 1 + str2.length;
-                cells.push({row: 2, col: startCol, isLine: true, span: totalLen});
-
-                let row = 3;
-                let endCol1 = startCol + str1.length - 1; 
-
-                if (str2.length === 1) {
-                    for(let i=ans.length-1; i>=0; i--) {
-                        let col = endCol1 - ans.length + 1 + i;
-                        cells.push({row: row, col: col, input: true, expected: ans[i], tabIndex: step++});
-                    }
-                } else {
-                    let partials = [];
-                    for(let i=str2.length-1; i>=0; i--) {
-                        let digit = parseInt(str2[i]);
-                        let p = (num1 * digit).toString();
-                        partials.push(p);
-                        
-                        let shift = (str2.length - 1 - i); 
-                        
-                        for(let j=p.length-1; j>=0; j--) {
-                            let col = endCol1 - shift - p.length + 1 + j;
-                            cells.push({row: row, col: col, input: true, expected: p[j], tabIndex: step++});
-                        }
-                        
-                        if (i === 0) { 
-                            let maxPartialLen = Math.max(...partials.map(pr => pr.length));
-                            let maxShift = str2.length - 1;
-                            let plusCol = endCol1 - maxShift - maxPartialLen;
-                            cells.push({row: row, col: plusCol, text: '+'});
-                        }
-                        row++;
-                    }
-                    
-                    let maxShift = str2.length - 1;
-                    let lastPartial = partials[partials.length-1];
-                    let leftmostCol = endCol1 - maxShift - lastPartial.length + 1;
-                    
-                    let maxPartialLen = Math.max(...partials.map(pr => pr.length));
-                    let plusCol = endCol1 - maxShift - maxPartialLen;
-                    if(plusCol < leftmostCol) leftmostCol = plusCol;
-
-                    let rightmostCol = endCol1;
-                    cells.push({row: row - 1, col: leftmostCol, isLine: true, span: (rightmostCol - leftmostCol + 1)});
-                    
-                    for(let i=ans.length-1; i>=0; i--) {
-                        let col = endCol1 - ans.length + 1 + i;
-                        cells.push({row: row, col: col, input: true, expected: ans[i], tabIndex: step++});
-                    }
-                }
-                return cells;
-            }
-        };
-
-        const MathUI = {
-            modal: document.getElementById('mathModal'),
-            container: document.getElementById('mathContainer'),
-            title: document.getElementById('mathTitle'),
-            instruction: document.getElementById('mathInstruction'),
-            btnCheck: document.getElementById('checkBtn'),
-            currentEnemyOrBlock: null,
-            divisionCount: 0,
-
+        const Audio = {
+            ctx: null, enabled: true,
             init: function() {
-                this.btnCheck.addEventListener('click', () => this.validate());
-            },
-
-            open: function(type, entity) {
-                this.currentEnemyOrBlock = entity;
-                this.container.innerHTML = '';
-                
-                let cellsData = [];
-                let isAdvanced = Game.score >= 50; 
-
-                if (type === 'division') {
-                    this.divisionCount++;
-                    let requireCalc = this.divisionCount > 1;
-
-                    this.title.innerText = "🍄 ЗАДАЧА ЗА ДЕЛЕНИЕ С ОПАШКА";
-                    this.instruction.innerText = requireCalc
-                        ? "Раздели числата. Пресметни и напиши числото за изваждане под чертата! Кликни върху цифра от условието, за да поставиш точка за заемане!"
-                        : "Раздели числата. Кликни върху цифра от условието, за да поставиш точка за заемане!";
-
-                    let divisor, quotient;
-                    if (isAdvanced) {
-                        divisor = Math.floor(Math.random() * 80) + 11;
-                        quotient = Math.floor(Math.random() * 90) + 11;
-                    } else {
-                        divisor = Math.random() < 0.7 ? Math.floor(Math.random() * 8) + 2 : Math.floor(Math.random() * 10) + 11;
-                        quotient = Math.floor(Math.random() * 90) + 11;
-                    }
-                    cellsData = MathGen.createDivision(divisor * quotient, divisor, requireCalc);
-                } else {
-                    this.title.innerText = "🟨 ЗАДАЧА ЗА УМНОЖЕНИЕ";
-                    this.instruction.innerText = "Умножи числата. Най-горният ред е за числата 'наум'.";
-                    
-                    if (isAdvanced) {
-                        cellsData = MathGen.createMultiplication(Math.floor(Math.random() * 90) + 10, Math.floor(Math.random() * 90) + 10);
-                    } else {
-                        if (Math.random() < 0.6) {
-                            cellsData = MathGen.createMultiplication(Math.floor(Math.random() * 900) + 100, Math.floor(Math.random() * 8) + 2);
-                        } else {
-                            cellsData = MathGen.createMultiplication(Math.floor(Math.random() * 90) + 10, Math.floor(Math.random() * 20) + 11);
-                        }
-                    }
-                }
-
-                cellsData.forEach(data => {
-                    let cell = document.createElement('div');
-                    cell.className = 'math-cell';
-                    cell.style.gridRow = data.row;
-                    cell.style.gridColumn = data.col;
-                    
-                    if (data.span) cell.style.gridColumn = `${data.col} / span ${data.span}`;
-
-                    if (data.isLine) {
-                        cell.style.pointerEvents = 'none';
-                        let line = document.createElement('div');
-                        line.className = 'math-line';
-                        cell.appendChild(line);
-                    } else if (data.input) {
-                        let inp = document.createElement('input');
-                        inp.type = "tel"; 
-                        inp.maxLength = 1;
-                        inp.className = `math-input ${data.isCarry ? 'carry-over' : ''}`;
-                        inp.dataset.expected = data.expected;
-                        if(data.tabIndex) inp.dataset.tabIndex = data.tabIndex;
-
-                        inp.addEventListener('input', function() {
-                            this.classList.remove('error');
-                            if(this.value.length === 1 && this.dataset.tabIndex) {
-                                let nextTabIndex = parseInt(this.dataset.tabIndex) + 1;
-                                let nextInp = MathUI.container.querySelector(`.math-input[data-tab-index="${nextTabIndex}"]`);
-                                if(nextInp) nextInp.focus();
-                            }
-                        });
-
-                        inp.addEventListener('focus', function() { this.select(); });
-                        cell.appendChild(inp);
-                    } else if (data.text) {
-                        let span = document.createElement('span');
-                        span.innerText = data.text;
-                        span.style.position = 'relative';
-                        span.style.display = 'inline-block';
-                        
-                        if(data.isCondition && /\d/.test(data.text)) {
-                            span.style.cursor = "pointer";
-                            span.title = "Кликни за точка (заемане)";
-                            span.addEventListener('click', () => span.classList.toggle('has-dot'));
-                        }
-                        cell.appendChild(span);
-                    }
-                    this.container.appendChild(cell);
-                });
-
-                this.modal.classList.remove('hidden');
-                this.modal.classList.add('flex');
-                setTimeout(() => {
-                    this.modal.classList.remove('opacity-0');
-                    let firstInp = this.container.querySelector('.math-input[data-tab-index="1"]');
-                    if(firstInp) firstInp.focus();
-                }, 10);
-            },
-
-            validate: function() {
-                let inputs = this.container.querySelectorAll('input:not(.carry-over)');
-                let allCorrect = true;
-
-                inputs.forEach(inp => {
-                    if (inp.value !== inp.dataset.expected && !(inp.dataset.expected === '' && inp.value === '')) {
-                        allCorrect = false;
-                        inp.classList.add('error');
-                        inp.value = '';
-                    }
-                });
-
-                if (allCorrect) {
-                    SoundFX.playSuccess();
-                    this.success();
-                } else {
-                    SoundFX.playError();
-                    this.btnCheck.innerHTML = '❌ ИМА ГРЕШКА! Опитай пак!';
-                    this.btnCheck.classList.replace('bg-green-500', 'bg-red-500');
-                    setTimeout(() => {
-                        this.btnCheck.innerHTML = '✅ ПРОВЕРИ';
-                        this.btnCheck.classList.replace('bg-red-500', 'bg-green-500');
-                    }, 2000);
+                if(!this.ctx) {
+                    const AC = window.AudioContext || window.webkitAudioContext;
+                    if(AC) this.ctx = new AC();
                 }
             },
+            toggle: function() {
+                this.enabled = !this.enabled;
+                document.getElementById('btn-sound').innerText = this.enabled ? '🔊' : '🔇';
+            },
+            play: function(type) {
+                if(!this.enabled || !this.ctx) return;
+                if(this.ctx.state === 'suspended') this.ctx.resume();
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.connect(gain); gain.connect(this.ctx.destination);
 
-            success: function() {
-                this.modal.classList.add('opacity-0');
-                setTimeout(() => {
-                    this.modal.classList.add('hidden');
-                    this.modal.classList.remove('flex');
-                    if (this.currentEnemyOrBlock) {
-                        if (this.currentEnemyOrBlock.type === 'enemy') {
-                            this.currentEnemyOrBlock.active = false;
-                            SoundFX.playCoin();
-                            Game.addScore(5);
-                        } else if (this.currentEnemyOrBlock.type === 'block') {
-                            this.currentEnemyOrBlock.hit = true;
-                            for(let i=0; i<3; i++) setTimeout(() => SoundFX.playCoin(), i*150);
-                            Game.addScore(10);
-                        }
-                    }
-                    Game.paused = false;
-                }, 800);
+                if(type === 'success') {
+                    osc.type = 'sine'; osc.frequency.setValueAtTime(600, this.ctx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(1200, this.ctx.currentTime + 0.1);
+                    gain.gain.setValueAtTime(0.1, this.ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.3);
+                    osc.start(); osc.stop(this.ctx.currentTime + 0.3);
+                } else if(type === 'error') {
+                    osc.type = 'sawtooth'; osc.frequency.setValueAtTime(200, this.ctx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(150, this.ctx.currentTime + 0.2);
+                    gain.gain.setValueAtTime(0.1, this.ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.2);
+                    osc.start(); osc.stop(this.ctx.currentTime + 0.2);
+                } else if(type === 'coin') {
+                    osc.type = 'square'; osc.frequency.setValueAtTime(800, this.ctx.currentTime);
+                    osc.frequency.setValueAtTime(1200, this.ctx.currentTime + 0.1);
+                    gain.gain.setValueAtTime(0.05, this.ctx.currentTime);
+                    gain.gain.linearRampToValueAtTime(0, this.ctx.currentTime + 0.2);
+                    osc.start(); osc.stop(this.ctx.currentTime + 0.2);
+                }
             }
         };
 
-        const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
+        const State = {
+            level: 1, mode: 'navigator', step: 'VIJ', // VIJ, ACTION, PREDICT, NEXT, CALC, CHECK, EVAL
+            taskCount: 0,
+            activeTask: null,
+            gridCells: [], gridCols: 0, gridRows: 0,
+            activeCellId: null,
+            hadErrorOnStep: false
+        };
+
+        const Generators = {
+            createTask: function(level) {
+                let a, b, op, cells = [], dim = {r:0, c:0};
+                let opRand = Math.random();
+
+                if(level == 1) { // +, - to 20
+                    op = opRand > 0.5 ? '+' : '-';
+                    if(op === '+') { a = Math.floor(Math.random()*10)+1; b = Math.floor(Math.random()*10)+1; }
+                    else { a = Math.floor(Math.random()*10)+10; b = Math.floor(Math.random()*10)+1; }
+                    let res = this.horizontal(a, b, op); cells = res.cells; dim = res.dim;
+                }
+                else if (level == 2) { // +, - to 100
+                    op = opRand > 0.5 ? '+' : '-';
+                    if(op === '+') { a = Math.floor(Math.random()*80)+10; b = Math.floor(Math.random()*(99-a))+1; }
+                    else { a = Math.floor(Math.random()*80)+20; b = Math.floor(Math.random()*(a-10))+1; }
+                    let res = Math.random() > 0.5 ? this.add(a,b) : this.horizontal(a,b,op);
+                    if(op==='-') res = this.sub(a,b);
+                    cells = res.cells; dim = res.dim;
+                }
+                else if (level == 3) { // +, - to 1000 written
+                    op = opRand > 0.5 ? '+' : '-';
+                    if(op === '+') { a = Math.floor(Math.random()*800)+100; b = Math.floor(Math.random()*(999-a))+1; }
+                    else { a = Math.floor(Math.random()*800)+200; b = Math.floor(Math.random()*(a-100))+1; }
+                    let res = op === '+' ? this.add(a,b) : this.sub(a,b);
+                    cells = res.cells; dim = res.dim;
+                }
+                else if (level == 4) { // Tabular *, /
+                    op = opRand > 0.5 ? 'x' : ':';
+                    if(op === 'x') { a = Math.floor(Math.random()*9)+1; b = Math.floor(Math.random()*9)+1; }
+                    else { b = Math.floor(Math.random()*9)+1; let q = Math.floor(Math.random()*9)+1; a = b * q; }
+                    let res = this.horizontal(a, b, op); cells = res.cells; dim = res.dim;
+                }
+                else if (level == 5) { // Long multiplication
+                    op = 'x';
+                    a = Math.floor(Math.random()*80)+11; b = Math.floor(Math.random()*8)+2;
+                    let res = this.mul(a, b); cells = res.cells; dim = res.dim;
+                }
+                else { // Fallback
+                    a = 10; b = 5; op = '+'; let res = this.horizontal(a,b,op); cells = res.cells; dim = res.dim;
+                }
+
+                let ans = op==='+' ? a+b : op==='-' ? a-b : op==='x' ? a*b : Math.floor(a/b);
+                return { a, b, op, answer: ans, cells, cols: dim.c, rows: dim.r };
+            },
+
+            horizontal: function(a, b, op) {
+                let cells = [];
+                let str = `${a} ${op === 'x' ? '·' : op} ${b} = `;
+                for(let i=0; i<str.length; i++) cells.push({id:`c${i}`, r:2, c:i+1, type:'cond', val:str[i]});
+                let ansStr = (op==='+'?a+b : op==='-'?a-b : op==='x'?a*b : a/b).toString();
+                let startC = str.length + 1;
+                for(let i=0; i<ansStr.length; i++) cells.push({id:`in${i}`, r:2, c:startC+i, type:'input', expected:ansStr[i], max:1});
+                return { cells, dim: {r:3, c: startC+ansStr.length} };
+            },
+
+            add: function(a, b) {
+                let cells = [];
+                let sA = a.toString(), sB = b.toString(), sAns = (a+b).toString();
+                let maxC = Math.max(sA.length, sB.length, sAns.length) + 1; // +1 for sign
+
+                // Carry row
+                for(let i=1; i<maxC; i++) cells.push({id:`ca${i}`, r:1, c:i+1, type:'carry', expected:'', max:1});
+
+                // A
+                let offsetA = maxC - sA.length + 1;
+                for(let i=0; i<sA.length; i++) cells.push({id:`a${i}`, r:2, c:offsetA+i, type:'cond', val:sA[i]});
+
+                // Sign + B
+                cells.push({id:'sign', r:3, c:1, type:'cond', val:'+'});
+                let offsetB = maxC - sB.length + 1;
+                for(let i=0; i<sB.length; i++) cells.push({id:`b${i}`, r:3, c:offsetB+i, type:'cond', val:sB[i]});
+
+                // Line
+                cells.push({id:'line', r:3, c:1, span:maxC, type:'line'});
+
+                // Ans (Inputs)
+                let offsetAns = maxC - sAns.length + 1;
+                for(let i=0; i<sAns.length; i++) {
+                    // Reverse order id for logic
+                    let revIdx = sAns.length - 1 - i;
+                    cells.push({id:`in${revIdx}`, r:4, c:offsetAns+i, type:'input', expected:sAns[i], max:1});
+                }
+                return { cells, dim: {r:4, c: maxC} };
+            },
+
+            sub: function(a, b) {
+                let cells = [];
+                let sA = a.toString(), sB = b.toString(), sAns = (a-b).toString();
+                let maxC = Math.max(sA.length, sB.length) + 1;
+
+                // Helper row (for 10s and modifications)
+                for(let i=1; i<maxC; i++) cells.push({id:`ca${i}`, r:1, c:i+1, type:'carry', expected:'', max:2});
+
+                // A (clickable for borrow dot)
+                let offsetA = maxC - sA.length + 1;
+                for(let i=0; i<sA.length; i++) cells.push({id:`a${i}`, r:2, c:offsetA+i, type:'borrow-dot', val:sA[i]});
+
+                // Sign + B
+                cells.push({id:'sign', r:3, c:1, type:'cond', val:'-'});
+                let offsetB = maxC - sB.length + 1;
+                for(let i=0; i<sB.length; i++) cells.push({id:`b${i}`, r:3, c:offsetB+i, type:'cond', val:sB[i]});
+
+                // Line
+                cells.push({id:'line', r:3, c:1, span:maxC, type:'line'});
+
+                // Ans
+                let offsetAns = maxC - sAns.length + 1;
+                for(let i=0; i<sAns.length; i++) {
+                     let revIdx = sAns.length - 1 - i;
+                     cells.push({id:`in${revIdx}`, r:4, c:offsetAns+i, type:'input', expected:sAns[i], max:1});
+                }
+                return { cells, dim: {r:4, c: maxC} };
+            },
+
+            mul: function(a, b) {
+                let cells = [];
+                let sA = a.toString(), sB = b.toString(), sAns = (a*b).toString();
+                let maxC = Math.max(sA.length + 1 + sB.length, sAns.length);
+                let r = 1;
+
+                // Carry
+                for(let i=0; i<sA.length; i++) cells.push({id:`ca${i}`, r:r, c:maxC-sA.length-sB.length+1+i, type:'carry', expected:'', max:2});
+                r++;
+
+                // Cond
+                let cOff = maxC - sA.length - sB.length;
+                for(let i=0; i<sA.length; i++) cells.push({id:`a${i}`, r:r, c:cOff+1+i, type:'cond', val:sA[i]});
+                cells.push({id:'sign', r:r, c:cOff+1+sA.length, type:'cond', val:'·'});
+                for(let i=0; i<sB.length; i++) cells.push({id:`b${i}`, r:r, c:cOff+2+sA.length+i, type:'cond', val:sB[i]});
+
+                cells.push({id:'l1', r:r, c:cOff+1, span:sA.length+sB.length+1, type:'line'});
+                r++;
+
+                // Assuming single digit multiplier for now to fit complexity
+                let offsetAns = maxC - sAns.length + 1;
+                for(let i=0; i<sAns.length; i++) {
+                     let revIdx = sAns.length - 1 - i;
+                     cells.push({id:`in${revIdx}`, r:r, c:offsetAns+i, type:'input', expected:sAns[i], max:1});
+                }
+                return { cells, dim: {r:r, c: maxC} };
+            }
+        };
+
+        const Analyzer = {
+            diagnoseError: function(a, b, op, ansStr) {
+                if(!ansStr || ansStr.trim() === '') return null;
+                let numAns = parseInt(ansStr);
+                if (op !== '+' && a + b === numAns) return '+';
+                if (op !== '-' && a >= b && a - b === numAns) return '-';
+                if (op !== 'x' && a * b === numAns) return 'x';
+                if (op !== ':' && b !== 0 && Math.floor(a / b) === numAns) return ':';
+                return null;
+            }
+        };
+
+        const UI = {
+            showScreen: function(id) {
+                document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+                document.getElementById(id).classList.add('active');
+                document.body.dataset.screen = id;
+            },
+            setIskri: function(text, mood = 'normal') {
+                const b = document.getElementById('iskri-text');
+                b.innerHTML = text;
+                // Add minor animation class if needed
+            },
+            updateEnergy: function() {
+                document.getElementById('energy-count').innerText = Storage.data.energy;
+            },
+            showChoices: function(choices, callback) {
+                const c = document.getElementById('dynamic-choices');
+                c.innerHTML = '';
+                c.classList.remove('hidden-visually');
+                document.getElementById('controls-area').classList.add('hidden-visually');
+
+                choices.forEach(ch => {
+                    let btn = document.createElement('button');
+                    btn.className = 'choice-btn';
+                    btn.innerHTML = ch.text;
+                    btn.onclick = () => callback(ch.val);
+                    c.appendChild(btn);
+                });
+            },
+            renderGrid: function(cells, cols, rows) {
+                const c = document.getElementById('grid-container');
+                c.innerHTML = '';
+                c.style.gridTemplateColumns = `repeat(${cols}, 40px)`;
+                c.style.gridTemplateRows = `repeat(${rows}, 40px)`;
+                c.classList.remove('hidden-visually');
+
+                cells.forEach(cell => {
+                    let div = document.createElement('div');
+                    div.style.gridColumn = cell.c;
+                    div.style.gridRow = cell.r;
+
+                    if(cell.span) div.style.gridColumn = `${cell.c} / span ${cell.span}`;
+
+                    if(cell.type === 'line') {
+                        div.className = 'm-line';
+                        c.appendChild(div);
+                        return;
+                    }
+
+                    div.className = 'm-cell';
+
+                    if(cell.type === 'cond') {
+                        div.innerText = cell.val;
+                    } else if(cell.type === 'borrow-dot') {
+                        div.innerText = cell.val;
+                        div.style.cursor = 'pointer';
+                        div.title = "Кликни за точка (заемане)";
+                        div.onclick = () => div.classList.toggle('has-dot');
+                    } else if(cell.type === 'input' || cell.type === 'carry') {
+                        let inner = document.createElement('div');
+                        inner.className = cell.type === 'input' ? 'm-input' : 'm-carry';
+                        inner.dataset.id = cell.id;
+                        inner.dataset.max = cell.max;
+                        inner.onclick = () => UI.setActiveCell(cell.id);
+                        div.appendChild(inner);
+                    }
+                    c.appendChild(div);
+                });
+
+                // Select first input automatically
+                let firstInp = cells.find(c => c.type === 'input' && c.id === 'in0');
+                if(firstInp) this.setActiveCell(firstInp.id);
+            },
+            setActiveCell: function(id) {
+                document.querySelectorAll('.m-input, .m-carry').forEach(el => el.classList.remove('active'));
+                let el = document.querySelector(`[data-id="${id}"]`);
+                if(el) {
+                    el.classList.add('active');
+                    State.activeCellId = id;
+                }
+            },
+            typeNum: function(num) {
+                if(!State.activeCellId) return;
+                let el = document.querySelector(`[data-id="${State.activeCellId}"]`);
+                if(!el) return;
+
+                el.classList.remove('error');
+                let max = parseInt(el.dataset.max) || 1;
+
+                if(num === 'del') {
+                    el.innerText = el.innerText.slice(0, -1);
+                } else {
+                    if(el.innerText.length < max) el.innerText += num;
+                    else el.innerText = num; // overwrite if full and max is 1
+                }
+
+                // Auto advance if max length reached
+                if(el.innerText.length === max && max === 1) {
+                    this.advanceFocus();
+                }
+            },
+            advanceFocus: function() {
+                // simple heuristic: find next input id (in0 -> in1)
+                if(State.activeCellId && State.activeCellId.startsWith('in')) {
+                    let idx = parseInt(State.activeCellId.replace('in', ''));
+                    let nextId = `in${idx+1}`;
+                    if(document.querySelector(`[data-id="${nextId}"]`)) {
+                        this.setActiveCell(nextId);
+                    }
+                }
+            },
+            showError: function(msg) {
+                Audio.play('error');
+                const b = document.getElementById('iskri-text');
+                b.innerHTML = `<span style="color:var(--accent-red)">⚠️ ${msg}</span>`;
+                b.parentElement.style.borderColor = "var(--accent-red)";
+                setTimeout(() => b.parentElement.style.borderColor = "var(--panel-border)", 2000);
+            },
+            showSuccess: function(msg) {
+                Audio.play('success');
+                const b = document.getElementById('iskri-text');
+                b.innerHTML = `<span style="color:var(--accent-green)">✅ ${msg}</span>`;
+            }
+        };
 
         const Game = {
-            width: 1280,
-            height: 720,
-            score: 0,
-            paused: true,
-            cameraX: 0,
-            keys: {},
-            lastTime: 0,
-
             init: function() {
-                canvas.width = this.width;
-                canvas.height = this.height;
-                ctx.imageSmoothingEnabled = false;
-                
-                window.addEventListener('keydown', e => this.keys[e.code] = true);
-                window.addEventListener('keyup', e => this.keys[e.code] = false);
+                Storage.load();
+                UI.updateEnergy();
+                document.body.dataset.screen = 'screen-start';
 
-                document.getElementById('startBtn').addEventListener('click', async () => {
-                    await SoundFX.init();
-                    document.getElementById('startScreen').style.display = 'none';
-                    this.paused = false;
-                    requestAnimationFrame(t => this.loop(t));
+                // Bind Start Screen
+                document.querySelectorAll('.mode-btn').forEach(b => {
+                    b.onclick = (e) => {
+                        document.querySelectorAll('.mode-btn').forEach(x => x.classList.remove('selected'));
+                        e.target.classList.add('selected');
+                    };
                 });
 
-                MathUI.init();
-                this.generateLevel();
-                init3D(); 
+                document.getElementById('btn-start').onclick = () => {
+                    Audio.init();
+                    let name = document.getElementById('playerName').value.trim();
+                    if(name) { Storage.data.name = name; Storage.save(); }
+
+                    State.level = document.getElementById('levelSelect').value;
+                    State.mode = document.querySelector('.mode-btn.selected').dataset.mode;
+                    State.taskCount = 0;
+
+                    UI.showScreen('screen-game');
+                    this.nextTask();
+                };
+
+                // Bind Numpad
+                document.querySelectorAll('.num-key').forEach(btn => {
+                    btn.onclick = (e) => {
+                        let val = e.target.innerText;
+                        if(val === '⌫') UI.typeNum('del');
+                        else UI.typeNum(val);
+                    };
+                });
+
+                // Keyboard support
+                window.addEventListener('keydown', e => {
+                    if(document.getElementById('screen-game').classList.contains('active') && State.step === 'CALC') {
+                        if(e.key >= '0' && e.key <= '9') UI.typeNum(e.key);
+                        if(e.key === 'Backspace') UI.typeNum('del');
+                        if(e.key === 'Enter') document.getElementById('btn-check').click();
+                    }
+                });
+
+                document.getElementById('btn-check').onclick = () => this.checkStep();
+                document.getElementById('btn-home').onclick = () => UI.showScreen('screen-start');
+
+                // Parent Screen Logic
+                let holdTimer;
+                document.getElementById('btn-settings').onmousedown = () => { holdTimer = setTimeout(() => this.openParentScreen(), 3000); };
+                document.getElementById('btn-settings').onmouseup = () => clearTimeout(holdTimer);
+                document.getElementById('btn-settings').onmouseleave = () => clearTimeout(holdTimer);
+                document.getElementById('btn-settings').ontouchstart = () => { holdTimer = setTimeout(() => this.openParentScreen(), 3000); };
+                document.getElementById('btn-settings').ontouchend = () => clearTimeout(holdTimer);
+
+                document.getElementById('btn-parent-close').onclick = () => UI.showScreen('screen-start');
             },
 
-            addScore: function(amount) {
-                this.score += amount;
-                const scoreEl = document.getElementById('scoreDisplay');
-                scoreEl.innerText = this.score;
-                scoreEl.classList.remove('pop-anim');
-                void scoreEl.offsetWidth;
-                scoreEl.classList.add('pop-anim');
+            openParentScreen: function() {
+                document.getElementById('stat-name').innerText = Storage.data.name || 'Неизвестен';
+                document.getElementById('stat-tasks').innerText = Storage.data.stats.tasks;
+                document.getElementById('stat-ops').innerText = Storage.data.stats.ops;
+                document.getElementById('stat-steps').innerText = Storage.data.stats.steps;
+                document.getElementById('stat-fixes').innerText = Storage.data.stats.fixes;
+                document.getElementById('stat-hints').innerText = Storage.data.stats.hints;
 
-                let levelTxt = "1 - НОВАК";
-                if(this.score >= 50) levelTxt = "2 - МАЙСТОР";
-                if(this.score >= 100) levelTxt = "3 - ЕКСПЕРТ";
-                document.getElementById('levelDisplay').innerText = levelTxt;
+                let errStr = Object.entries(Storage.data.stats.errors).map(([k,v]) => `${k}: ${v}`).join('<br>') || 'Няма';
+                document.getElementById('stat-errors').innerHTML = errStr;
+
+                UI.showScreen('screen-parent');
             },
 
-            generateLevel: function() {
-                this.blocks = [];
-                this.enemies = [];
-                
-                let groundY = this.height - 40;
-                for(let i=0; i<150; i++) {
-                    this.blocks.push({ x: i*40, y: groundY, w: 40, h: 40, type: 'ground' });
+            nextTask: function() {
+                if(State.taskCount >= 5) {
+                    UI.setIskri(`Мисията е успешна! Печелиш +5 ⚡. Избери ново ниво от Начало.`);
+                    Storage.data.energy += 5;
+                    Storage.save();
+                    UI.updateEnergy();
+                    document.getElementById('controls-area').classList.add('hidden-visually');
+                    document.getElementById('grid-container').classList.add('hidden-visually');
+                    return;
                 }
 
-                for(let i=1; i<30; i++) {
-                    let startX = i * 400 + Math.random() * 200;
-                    this.blocks.push({ x: startX, y: groundY - 150, w: 40, h: 40, type: 'block', hit: false });
-                    this.blocks.push({ x: startX - 40, y: groundY - 150, w: 40, h: 40, type: 'brick' });
-                    this.blocks.push({ x: startX + 40, y: groundY - 150, w: 40, h: 40, type: 'brick' });
-                    
-                    if (Math.random() > 0.3) {
-                        this.enemies.push({ x: startX + 200, y: groundY - 30, w: 30, h: 30, vx: -1, type: 'enemy', active: true });
+                State.activeTask = Generators.createTask(State.level);
+                State.hadErrorOnStep = false;
+                this.setStep('VIJ');
+            },
+
+            setStep: function(stepName) {
+                State.step = stepName;
+                State.hadErrorOnStep = false;
+
+                let t = State.activeTask;
+
+                if (stepName === 'VIJ') {
+                    UI.renderGrid(t.cells, t.cols, t.rows);
+                    document.getElementById('controls-area').classList.add('hidden-visually');
+
+                    UI.setIskri(`Задача ${State.taskCount + 1} от 5. Огледай задачата. Какво е действието?`);
+                    UI.showChoices([
+                        {text: '➕ Събиране', val: '+'}, {text: '➖ Изваждане', val: '-'},
+                        {text: '✖️ Умножение', val: 'x'}, {text: '➗ Деление', val: ':'}
+                    ], (val) => {
+                        if(val === t.op) {
+                            Audio.play('coin'); Storage.data.energy++; Storage.data.stats.ops++; UI.updateEnergy();
+                            this.setStep('PREDICT');
+                        } else {
+                            UI.showError('Разгледай пак знака в задачата.'); Storage.logError('wrong_op_choice');
+                        }
+                    });
+                }
+                else if (stepName === 'PREDICT') {
+                    if (t.op === '+' || t.op === '-') {
+                        UI.setIskri(`Добре! Действието е ${t.op === '+' ? 'събиране' : 'изваждане'}. Какво очакваш за резултата?`);
+                        UI.showChoices([
+                            {text: `По-голям от ${t.a}`, val: '>'},
+                            {text: `По-малък от ${t.a}`, val: '<'},
+                            {text: `Равен на ${t.a}`, val: '='}
+                        ], (val) => {
+                            let correct = (t.op==='+' && t.b>0 && val==='>') || (t.op==='-' && t.b>0 && val==='<') || (t.b===0 && val==='=');
+                            if(correct) { Audio.play('coin'); this.setStep('CALC'); }
+                            else { UI.showError('Помисли пак. Ако добавяме, става повече. Ако махаме - по-малко.'); }
+                        });
+                    } else {
+                        this.setStep('CALC'); // Skip predict for * and / for now to keep flow fast
                     }
                 }
+                else if (stepName === 'CALC') {
+                    let actionText = State.mode === 'navigator' ? 'Какво следва? Въведи отговора в полетата.' : 'Пресметни.';
+                    UI.setIskri(actionText);
+                    document.getElementById('dynamic-choices').classList.add('hidden-visually');
+                    document.getElementById('controls-area').classList.remove('hidden-visually');
+
+                    let firstInp = t.cells.find(c => c.type === 'input' && c.id === 'in0');
+                    if(firstInp) UI.setActiveCell(firstInp.id);
+                }
             },
 
-            player: {
-                x: 100, y: 100, w: 30, h: 40, vx: 0, vy: 0, speed: 6, jumpForce: -14, grounded: false
-            },
+            checkStep: function() {
+                if(State.step !== 'CALC') return;
 
-            update: function() {
-                if(this.paused) return;
+                let allCorrect = true;
+                let inputs = Array.from(document.querySelectorAll('.m-input'));
+                let fullAns = "";
 
-                this.player.vy += 0.6; 
-                
-                if (this.keys['ArrowLeft']) this.player.vx = -this.player.speed;
-                else if (this.keys['ArrowRight']) this.player.vx = this.player.speed;
-                else this.player.vx = 0;
+                inputs.forEach(inp => {
+                    // Collect full answer assuming id format in0, in1... (reverse order)
+                    let expected = inp.dataset.expected;
+                    let val = inp.innerText;
 
-                if ((this.keys['Space'] || this.keys['ArrowUp']) && this.player.grounded) {
-                    this.player.vy = this.player.jumpForce;
-                    this.player.grounded = false;
-                    SoundFX.playJump();
-                }
+                    if(expected !== undefined && expected !== val && !(expected === '' && val === '')) {
+                        allCorrect = false;
+                        inp.classList.add('error');
+                    } else {
+                        inp.classList.remove('error');
+                        inp.classList.add('success');
+                    }
+                });
 
-                this.player.x += this.player.vx;
-                this.player.y += this.player.vy;
+                if(allCorrect) {
+                    UI.showSuccess("Чудесно! Реши я правилно.");
+                    Storage.data.stats.tasks++;
+                    if(!State.hadErrorOnStep) { Storage.data.energy += 2; UI.updateEnergy(); }
+                    Storage.save();
 
-                if (this.player.x > this.cameraX + this.width / 2.5) {
-                    this.cameraX = this.player.x - this.width / 2.5;
-                }
-                if (this.cameraX < 0) this.cameraX = 0;
-                if (this.player.x < 0) this.player.x = 0;
+                    setTimeout(() => {
+                        State.taskCount++;
+                        this.nextTask();
+                    }, 1500);
+                } else {
+                    State.hadErrorOnStep = true;
+                    // Diagnosis logic
+                    let completedLen = inputs.filter(i => i.innerText.trim() !== '').length;
+                    if (completedLen === inputs.length) {
+                        // Reconstruct answer string. Inputs are id'd in0 (ones), in1 (tens) etc.
+                        let ansArr = [];
+                        inputs.forEach(i => {
+                            let idx = parseInt(i.dataset.id.replace('in',''));
+                            if(!isNaN(idx)) ansArr[idx] = i.innerText;
+                        });
+                        let finalStr = ansArr.reverse().join('');
 
-                this.player.grounded = false;
-                
-                for (let b of this.blocks) {
-                    if (this.checkCollision(this.player, b)) {
-                        if (this.player.vy > 0 && this.player.y + this.player.h - this.player.vy <= b.y) {
-                            this.player.grounded = true;
-                            this.player.vy = 0;
-                            this.player.y = b.y - this.player.h;
-                        } 
-                        else if (this.player.vy < 0 && this.player.y - this.player.vy >= b.y + b.h) {
-                            this.player.vy = 0;
-                            this.player.y = b.y + b.h;
-                            SoundFX.playBump();
-                            if (b.type === 'block' && !b.hit) {
-                                this.paused = true;
-                                MathUI.open('multiplication', b);
-                            }
-                        } 
-                        else {
-                            if (this.player.vx > 0) this.player.x = b.x - this.player.w;
-                            if (this.player.vx < 0) this.player.x = b.x + b.w;
+                        let diag = Analyzer.diagnoseError(State.activeTask.a, State.activeTask.b, State.activeTask.op, finalStr);
+                        if(diag) {
+                            let actionNames = {'+':'събиране', '-':'изваждане', 'x':'умножение', ':':'деление'};
+                            UI.showError(`Внимание! Полученият резултат е от ${actionNames[diag]}, а в задачата знакът е друг.`);
+                            Storage.logError('wrong_operation_calc');
+                            return;
                         }
                     }
+
+                    UI.showError("Има грешка. Поправи маркираните в червено полета.");
+                    Storage.logError('calc_error');
                 }
-
-                for (let e of this.enemies) {
-                    if (!e.active) continue;
-                    e.x += e.vx;
-                    
-                    for (let b of this.blocks) {
-                        if (b.y <= e.y && this.checkCollision(e, b)) {
-                            e.vx *= -1;
-                            break;
-                        }
-                    }
-
-                    if (this.checkCollision(this.player, e)) {
-                        this.paused = true;
-                        SoundFX.playEnemy();
-                        MathUI.open('division', e);
-                        this.player.x -= 15; 
-                    }
-                }
-
-                if (this.player.y > this.height) {
-                    this.player.x = this.cameraX + 100;
-                    this.player.y = 100;
-                    this.player.vy = 0;
-                }
-            },
-
-            checkCollision: function(r1, r2) {
-                return r1.x < r2.x + r2.w && r1.x + r1.w > r2.x &&
-                       r1.y < r2.y + r2.h && r1.y + r1.h > r2.y;
-            },
-
-            draw: function() {
-                ctx.fillStyle = '#5c94fc';
-                ctx.fillRect(0, 0, this.width, this.height);
-
-                ctx.save();
-                ctx.translate(-this.cameraX, 0);
-
-                for (let b of this.blocks) {
-                    if (b.type === 'ground') {
-                        ctx.fillStyle = '#c84c0c';
-                        ctx.fillRect(b.x, b.y, b.w, b.h);
-                        ctx.fillStyle = '#fc9838';
-                        ctx.fillRect(b.x, b.y, b.w, 4);
-                    } else if (b.type === 'brick') {
-                        ctx.fillStyle = '#c84c0c';
-                        ctx.fillRect(b.x, b.y, b.w, b.h);
-                        ctx.strokeStyle = '#000';
-                        ctx.strokeRect(b.x, b.y, b.w, b.h);
-                        ctx.beginPath();
-                        ctx.moveTo(b.x, b.y + b.h/2); ctx.lineTo(b.x + b.w, b.y + b.h/2);
-                        ctx.moveTo(b.x + b.w/2, b.y); ctx.lineTo(b.x + b.w/2, b.y + b.h/2);
-                        ctx.moveTo(b.x + b.w/4, b.y + b.h/2); ctx.lineTo(b.x + b.w/4, b.y + b.h);
-                        ctx.moveTo(b.x + b.w*0.75, b.y + b.h/2); ctx.lineTo(b.x + b.w*0.75, b.y + b.h);
-                        ctx.stroke();
-                    } else if (b.type === 'block') {
-                        ctx.fillStyle = b.hit ? '#c84c0c' : '#ffd700'; 
-                        ctx.fillRect(b.x, b.y, b.w, b.h);
-                        ctx.strokeStyle = '#000';
-                        ctx.strokeRect(b.x, b.y, b.w, b.h);
-                        if (!b.hit) {
-                            ctx.fillStyle = '#000';
-                            ctx.fillRect(b.x + 6, b.y + 6, 4, 4);
-                            ctx.fillRect(b.x + b.w - 10, b.y + 6, 4, 4);
-                            
-                            ctx.fillStyle = '#d2691e'; 
-                            ctx.font = 'bold 28px "Impact"';
-                            ctx.textAlign = 'center';
-                            ctx.textBaseline = 'middle';
-                            ctx.fillText('?', b.x + b.w/2, b.y + b.h/2 + 2);
-                        }
-                    }
-                }
-
-                for (let e of this.enemies) {
-                    if (e.active) {
-                        ctx.fillStyle = '#e84c0c';
-                        ctx.beginPath();
-                        ctx.arc(e.x + e.w/2, e.y + e.h, e.w/2, Math.PI, 0);
-                        ctx.fill();
-                        ctx.fillStyle = '#fff';
-                        ctx.fillRect(e.x + 5, e.y + e.h - 10, e.w - 10, 10);
-                        ctx.fillStyle = '#000';
-                        ctx.fillRect(e.x + 8, e.y + e.h - 15, 4, 8);
-                        ctx.fillRect(e.x + 18, e.y + e.h - 15, 4, 8);
-                    }
-                }
-
-                ctx.fillStyle = '#ff0000'; 
-                ctx.fillRect(this.player.x + 5, this.player.y, 20, 15);
-                ctx.fillStyle = '#ffcc99'; 
-                ctx.fillRect(this.player.x + 5, this.player.y + 15, 20, 10);
-                ctx.fillStyle = '#0000ff'; 
-                ctx.fillRect(this.player.x, this.player.y + 25, 30, 15);
-
-                ctx.restore();
-            },
-
-            loop: function(timestamp) {
-                let dt = timestamp - this.lastTime;
-                this.lastTime = timestamp;
-
-                this.update();
-                this.draw();
-
-                requestAnimationFrame(t => this.loop(t));
             }
         };
 
-        window.onload = () => Game.init();
+        function runTests() {
+            console.log("--- Running MathNavigator Tests ---");
+            let p1 = Generators.add(45, 55);
+            let r1 = p1.cells.find(c => c.id === 'in0' && c.expected === '0');
+            console.log("Add 45+55 ones column:", r1 ? "PASS" : "FAIL");
+
+            let p2 = Analyzer.diagnoseError(8, 2, '-', '4');
+            console.log("Diagnose 8-2=4 (division):", p2 === ':' ? "PASS" : "FAIL");
+        }
+
+        window.onload = () => {
+            Game.init();
+            runTests();
+            if('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('sw.js').catch(() => {});
+            }
+        };
     </script>
 </body>
 </html>
