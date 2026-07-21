@@ -128,6 +128,15 @@
         }
         .m-scratch.active { border-color: var(--accent-blue); background: #eff6ff; }
 
+        .m-label {
+            display: flex; align-items: center; height: var(--cell-size);
+            font-size: clamp(0.6rem, 2.2vw, 0.75rem); color: #64748b; white-space: nowrap; padding-left: 4px;
+        }
+
+        .division-caption { text-align: center; margin-bottom: -0.25rem; }
+        .division-caption .title { font-weight: 800; color: var(--accent-blue); letter-spacing: 1px; font-size: clamp(0.75rem, 2.5vw, 0.9rem); }
+        .division-caption .hint { font-size: clamp(0.7rem, 2.3vw, 0.85rem); color: #64748b; margin-top: 2px; }
+
         .m-line { position: absolute; bottom: 0; left: 0; width: 100%; height: 3px; background: #0f172a; z-index: 10; }
 
         .has-dot::before {
@@ -299,6 +308,10 @@
 
         <div class="workspace">
             <div class="math-area" id="math-area">
+                <div id="division-caption" class="division-caption hidden-visually">
+                    <div class="title">ДЕЛЕНИЕ С ОПАШКА</div>
+                    <div class="hint">✏️ Запиши частното, после умножавай, изваждай и сваляй следващата цифра. Кликни върху цифра от делимото, за да поставиш или махнеш точка над нея.</div>
+                </div>
                 <!-- Grid renders here -->
                 <div id="grid-container" class="math-grid hidden-visually"></div>
 
@@ -649,7 +662,7 @@
             division: function(a, b) {
                 let sA = a.toString();
                 let digits = sA.split('').map(Number);
-                let steps = []; // { endPos, product }
+                let steps = []; // { endPos, workingValue, product, postRemainder }
                 let remainder = 0;
                 let started = false;
                 let qDigits = [];
@@ -660,18 +673,22 @@
                         continue;
                     }
                     started = true;
+                    let workingValue = remainder;
                     let qDigit = Math.floor(remainder / b);
                     let product = qDigit * b;
+                    let postRemainder = remainder - product;
                     qDigits.push(qDigit);
-                    steps.push({ endPos: i + 1, product });
-                    remainder = remainder - product;
+                    steps.push({ endPos: i + 1, workingValue, product, postRemainder });
+                    remainder = postRemainder;
                 }
                 let qStr = qDigits.join('');
                 let cells = [];
                 let dLen = sA.length;
                 const OFF = 1; // reserve column 1 so minus signs always fit
 
-                for (let i = 0; i < dLen; i++) cells.push({id:`d${i}`, r:1, c: i+1+OFF, type:'cond', val: sA[i]});
+                // Dividend digits are clickable dot-markers (like the borrow dots), so pupils
+                // can mark which digits they've already brought down.
+                for (let i = 0; i < dLen; i++) cells.push({id:`d${i}`, r:1, c: i+1+OFF, type:'borrow-dot', val: sA[i]});
                 let barCol = dLen + 1 + OFF;
                 cells.push({id:'bar', r:1, c: barCol, type:'cond', val:'⏐'});
                 let qCol = barCol + 1;
@@ -685,18 +702,37 @@
                 let maxCol = Math.max(dLen + OFF, qCol + qStr.length - 1);
                 let row = 3;
                 steps.forEach((step, idx) => {
+                    // "- product" row, right-aligned under the digits it was subtracted from
                     let prodLen = Math.max(1, step.product.toString().length);
                     let endCol = step.endPos + OFF;
                     let startCol = endCol - prodLen + 1;
                     cells.push({id:`sign${idx}`, r:row, c: startCol - 1, type:'cond', val:'-'});
                     for (let k = 0; k < prodLen; k++) cells.push({id:`p${idx}_${k}`, r:row, c: startCol + k, type:'scratch', expected:'', max:1});
-                    row++;
-                    cells.push({id:`line${idx}`, r:row, c: startCol, span: prodLen, type:'line'});
-                    row++;
-                    cells.push({id:`rem${idx}`, r:row, c: endCol, type:'scratch', expected:'', max:1});
-                    lastRow = row;
                     maxCol = Math.max(maxCol, endCol);
                     row++;
+
+                    cells.push({id:`line${idx}`, r:row, c: startCol, span: prodLen, type:'line'});
+                    row++;
+
+                    if (idx < steps.length - 1) {
+                        // Next row shows the brought-down working value (remainder + next digit),
+                        // e.g. remainder 1 + digit 0 brought down = "10".
+                        let next = steps[idx + 1];
+                        let valLen = Math.max(1, next.workingValue.toString().length);
+                        let vEndCol = next.endPos + OFF;
+                        let vStartCol = vEndCol - valLen + 1;
+                        for (let k = 0; k < valLen; k++) cells.push({id:`v${idx}_${k}`, r:row, c: vStartCol + k, type:'scratch', expected:'', max:1});
+                        maxCol = Math.max(maxCol, vEndCol);
+                        lastRow = row;
+                        row++;
+                    } else {
+                        // Final remainder, labeled
+                        cells.push({id:'remFinal', r:row, c: endCol, type:'scratch', expected:'', max:1});
+                        cells.push({id:'remLabel', r:row, c: endCol + 1, span: 3, type:'label', val:'← остатък'});
+                        maxCol = Math.max(maxCol, endCol + 3);
+                        lastRow = row;
+                        row++;
+                    }
                 });
 
                 return { cells, dim: { r: lastRow, c: maxCol } };
@@ -759,6 +795,13 @@
 
                     if(cell.type === 'line') {
                         div.className = 'm-line';
+                        c.appendChild(div);
+                        return;
+                    }
+
+                    if(cell.type === 'label') {
+                        div.className = 'm-label';
+                        div.innerText = cell.val;
                         c.appendChild(div);
                         return;
                     }
@@ -939,6 +982,7 @@
                     UI.updateEnergy();
                     document.getElementById('controls-area').classList.add('hidden-visually');
                     document.getElementById('grid-container').classList.add('hidden-visually');
+                    document.getElementById('division-caption').classList.add('hidden-visually');
                     return;
                 }
 
@@ -964,6 +1008,7 @@
                 if (stepName === 'VIJ') {
                     UI.renderGrid(t.cells, t.cols, t.rows);
                     document.getElementById('controls-area').classList.add('hidden-visually');
+                    document.getElementById('division-caption').classList.toggle('hidden-visually', t.op !== ':');
 
                     UI.setIskri(`Задача ${State.taskCount + 1} от 5. Огледай задачата. Какво е действието?`);
                     UI.showChoices([
