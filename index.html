@@ -809,11 +809,14 @@
                         lastRow = row;
                         row++;
                     } else {
-                        // Final remainder, labeled — boxes packed consecutively right under the line, no gap
+                        // Final remainder, labeled — digits packed consecutively (no internal
+                        // gaps) and right-aligned so the last digit sits under the ones column,
+                        // same as the dividend/product rows above it.
                         let remLen = Math.max(1, step.postRemainder.toString().length);
-                        for (let k = 0; k < remLen; k++) cells.push({id:`remFinal${k}`, r:row, c: startCol + k, type:'scratch', expected:'', max:1});
-                        cells.push({id:'remLabel', r:row, c: startCol + remLen, span: 3, type:'label', val:'← остатък'});
-                        maxCol = Math.max(maxCol, startCol + remLen + 2);
+                        let remStartCol = endCol - remLen + 1;
+                        for (let k = 0; k < remLen; k++) cells.push({id:`remFinal${k}`, r:row, c: remStartCol + k, type:'scratch', expected:'', max:1});
+                        cells.push({id:'remLabel', r:row, c: endCol + 1, span: 3, type:'label', val:'← остатък'});
+                        maxCol = Math.max(maxCol, endCol + 3);
                         lastRow = row;
                         row++;
                     }
