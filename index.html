@@ -97,7 +97,7 @@
 
         .workspace { flex: 1; display: flex; flex-direction: column; min-height: 0; gap: 1rem; }
         .math-area {
-            flex: 1; background: var(--grid-bg); border-radius: 0.5rem 1rem 1rem 0.5rem; padding: 1rem 1rem 1rem 2.25rem; overflow: auto;
+            flex: 1; min-height: 0; background: var(--grid-bg); border-radius: 0.5rem 1rem 1rem 0.5rem; padding: 1rem 1rem 1rem 2.25rem; overflow: auto;
             display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 1rem; position: relative;
             box-shadow: -6px 0 0 -3px rgba(0,0,0,0.05), 0 6px 18px rgba(0,0,0,0.25);
         }
@@ -114,10 +114,7 @@
             display: grid;
             gap: 0;
             background-color: var(--grid-bg);
-            background-image: linear-gradient(var(--grid-line) 1px, transparent 1px), linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
-            background-size: var(--cell-size) var(--cell-size);
-            background-position: 0 0;
-            padding: var(--cell-size);
+            padding: calc(var(--cell-size) * 0.6);
             border: 2px solid var(--accent-blue);
             border-radius: 8px;
             box-shadow: inset 0 0 15px rgba(0,0,0,0.05);
@@ -127,6 +124,7 @@
             width: var(--cell-size); height: var(--cell-size); display: flex; justify-content: center; align-items: center;
             font-size: calc(var(--cell-size) * 0.7); font-weight: bold; color: #0f172a; position: relative; font-family: monospace;
         }
+        .m-cell.plain { border: 1px solid var(--grid-line); background: rgba(148, 163, 184, 0.06); }
 
         .m-input {
             width: calc(var(--cell-size) - 2px); height: calc(var(--cell-size) - 2px); border: 2px dashed #94a3b8; background: rgba(248, 250, 252, 0.85); border-radius: 4px;
@@ -259,6 +257,19 @@
             .numpad { grid-template-columns: repeat(5, 1fr); }
             .choice-grid { grid-template-columns: 1fr; }
             .iskri-avatar { --iskri-size: 56px; }
+        }
+
+        /* Tablets / landscape phones / laptops: task and controls side by side so the
+           numpad and buttons are always visible without scrolling, whatever the task's size. */
+        @media (min-width: 700px) {
+            .workspace { flex-direction: row; }
+            .math-area { flex: 1 1 60%; }
+            .controls-area {
+                flex-direction: column; flex: 0 0 auto; width: clamp(190px, 26vw, 250px);
+                height: 100%; overflow-y: auto; padding: 0;
+            }
+            .numpad { grid-template-columns: repeat(3, 1fr); }
+            .action-panel { flex-direction: column; width: 100%; }
         }
 
         /* Laptops / desktops: a little extra breathing room */
@@ -518,6 +529,36 @@
         };
 
         const Generators = {
+            // Collapses any row or column that has zero cells in it, so the visible grid
+            // tightly wraps the real content instead of showing large empty stretches of
+            // decorative squares. Columns are compacted using the union across ALL rows,
+            // so place-value alignment (units under units, tens under tens...) is preserved.
+            compactGrid: function(cells, dim) {
+                let usedRows = new Set(), usedCols = new Set();
+                cells.forEach(cell => {
+                    usedRows.add(cell.r);
+                    let span = cell.span || 1;
+                    for (let k = 0; k < span; k++) usedCols.add(cell.c + k);
+                });
+                let rows = Array.from(usedRows).sort((a,b) => a-b);
+                let cols = Array.from(usedCols).sort((a,b) => a-b);
+                let rowMap = {}, colMap = {};
+                rows.forEach((r,i) => rowMap[r] = i+1);
+                cols.forEach((c,i) => colMap[c] = i+1);
+
+                let newCells = cells.map(cell => {
+                    let nc = Object.assign({}, cell);
+                    nc.r = rowMap[cell.r];
+                    nc.c = colMap[cell.c];
+                    if (cell.span) {
+                        let oldEnd = cell.c + cell.span - 1;
+                        nc.span = colMap[oldEnd] - nc.c + 1;
+                    }
+                    return nc;
+                });
+                return { cells: newCells, dim: { r: rows.length, c: cols.length } };
+            },
+
             createTask: function(level) {
                 let a, b, op, cells = [], dim = {r:0, c:0};
                 let opRand = Math.random();
@@ -591,6 +632,9 @@
                         return this.createTask(pick);
                     }
                 }
+
+                let compact = this.compactGrid(cells, dim);
+                cells = compact.cells; dim = compact.dim;
 
                 let ans = op==='+' ? a+b : op==='-' ? a-b : op==='x' ? a*b : Math.floor(a/b);
                 return { a, b, op, answer: ans, cells, cols: dim.c, rows: dim.r };
@@ -864,6 +908,13 @@
             }
         };
 
+        const CAPTIONS = {
+            '+': { title: 'ЗАДАЧА ЗА СЪБИРАНЕ', hint: '✏️ Събери числата разред по разред, като започнеш отдясно наляво. Ако сборът е 10 или повече, запиши в квадратчето отгоре цифрата, която трябва да запомниш наум.', color: 'var(--accent-green)' },
+            '-': { title: 'ЗАДАЧА ЗА ИЗВАЖДАНЕ', hint: '✏️ Изваждай разред по разред отдясно наляво. Ако цифрата отгоре е по-малка, кликни върху нея, за да поставиш точка — това означава, че си заел 10 от съседния разред.', color: 'var(--accent-red)' },
+            'x': { title: 'ЗАДАЧА ЗА УМНОЖЕНИЕ', hint: '✏️ Умножавай всяка цифра от горното число по долното число, като започнеш отдясно наляво. Запиши в квадратчето отгоре цифрата, която трябва да запомниш наум.', color: 'var(--accent-purple)' },
+            ':': { title: 'ЗАДАЧА ЗА ДЕЛЕНИЕ С ОПАШКА', hint: '✏️ Запиши частното, после умножавай, изваждай и сваляй следващата цифра. Кликни върху цифра от делимото, за да поставиш или махнеш точка над нея.', color: 'var(--accent-blue)' }
+        };
+
         const Analyzer = {
             diagnoseError: function(a, b, op, ansStr) {
                 if(!ansStr || ansStr.trim() === '') return null;
@@ -934,8 +985,10 @@
                     div.className = 'm-cell';
 
                     if(cell.type === 'cond') {
+                        div.className += ' plain';
                         div.innerText = cell.val;
                     } else if(cell.type === 'borrow-dot') {
+                        div.className += ' plain';
                         div.innerText = cell.val;
                         div.style.cursor = 'pointer';
                         div.title = "Кликни за точка (заемане)";
@@ -1149,16 +1202,14 @@
                     document.getElementById('grid-container').classList.add('grid-locked');
                     document.getElementById('controls-area').classList.add('hidden-visually');
 
-                    const CAPTIONS = {
-                        '+': { title: 'ЗАДАЧА ЗА СЪБИРАНЕ', hint: '✏️ Събери числата разред по разред, като започнеш отдясно наляво. Ако сборът е 10 или повече, запиши в квадратчето отгоре цифрата, която трябва да запомниш наум.', color: 'var(--accent-green)' },
-                        '-': { title: 'ЗАДАЧА ЗА ИЗВАЖДАНЕ', hint: '✏️ Изваждай разред по разред отдясно наляво. Ако цифрата отгоре е по-малка, кликни върху нея, за да поставиш точка — това означава, че си заел 10 от съседния разред.', color: 'var(--accent-red)' },
-                        'x': { title: 'ЗАДАЧА ЗА УМНОЖЕНИЕ', hint: '✏️ Умножавай всяка цифра от горното число по долното число, като започнеш отдясно наляво. Запиши в квадратчето отгоре цифрата, която трябва да запомниш наум.', color: 'var(--accent-purple)' },
-                        ':': { title: 'ЗАДАЧА ЗА ДЕЛЕНИЕ С ОПАШКА', hint: '✏️ Запиши частното, после умножавай, изваждай и сваляй следващата цифра. Кликни върху цифра от делимото, за да поставиш или махнеш точка над нея.', color: 'var(--accent-blue)' }
-                    };
                     let cap = CAPTIONS[t.op];
                     document.getElementById('task-caption-title').innerText = cap.title;
-                    document.getElementById('task-caption-hint').innerText = cap.hint;
                     document.getElementById('task-caption-dot').style.backgroundColor = cap.color;
+                    // The step-by-step algorithm hint stays hidden until the child asks for
+                    // help - the goal is for them to figure it out first.
+                    let hintEl = document.getElementById('task-caption-hint');
+                    hintEl.innerText = '';
+                    hintEl.classList.add('hidden-visually');
                     document.getElementById('task-caption').classList.remove('hidden-visually');
 
                     // Самостоятелен режим: без въпрос за действието и без прогноза -
@@ -1214,6 +1265,22 @@
             giveHint: function() {
                 if (State.step !== 'CALC' || State.mode === 'solo') return;
 
+                let hintEl = document.getElementById('task-caption-hint');
+
+                if (hintEl.classList.contains('hidden-visually')) {
+                    // First press for this task: reveal the step-by-step strategy text,
+                    // which stays hidden by default so the child tries on their own first.
+                    let cap = CAPTIONS[State.activeTask.op];
+                    hintEl.innerText = cap.hint;
+                    hintEl.classList.remove('hidden-visually');
+                    Storage.data.stats.hints++;
+                    Storage.save();
+                    UI.setIskri('Виж подсказката над решетката. 👆');
+                    return;
+                }
+
+                // Hint was already shown once and the child is still stuck -
+                // reveal one digit as a more concrete nudge.
                 // Only reveal graded answer cells (.m-input) - carry/scratch boxes have no
                 // fixed correct value, so hinting there wouldn't mean anything.
                 let el = document.querySelector(`[data-id="${State.activeCellId}"].m-input`);
