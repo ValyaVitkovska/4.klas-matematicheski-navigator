@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mathnav-cache-v8';
+const CACHE_NAME = 'mathnav-cache-v11';
 const ASSETS = [
   './',
   './index.html',
