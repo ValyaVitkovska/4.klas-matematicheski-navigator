@@ -83,7 +83,7 @@
         .iskri-bubble::before { content: ''; position: absolute; left: -10px; top: 15px; border-width: 10px 10px 10px 0; border-style: solid; border-color: transparent var(--accent-blue) transparent transparent; }
 
         .workspace { flex: 1; display: flex; flex-direction: column; min-height: 0; gap: 1rem; }
-        .math-area { flex: 1; background: var(--grid-bg); border-radius: 1rem; padding: 1rem; overflow: auto; display: flex; justify-content: center; align-items: center; position: relative; }
+        .math-area { flex: 1; background: var(--grid-bg); border-radius: 1rem; padding: 1rem; overflow: auto; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 1rem; position: relative; }
 
         .math-grid {
             display: grid;
@@ -133,7 +133,7 @@
 
         .action-panel { display: flex; flex-direction: column; gap: 0.5rem; width: clamp(96px, 22vw, 140px); }
 
-        .choice-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem; }
+        .choice-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; width: 100%; max-width: 420px; }
         .choice-btn { background: var(--panel-bg); padding: clamp(1rem, 4vw, 1.5rem); border: 2px solid var(--panel-border); border-radius: 1rem; font-size: clamp(1rem, 3vw, 1.2rem); color: white; cursor: pointer; transition: all 0.2s; }
         .choice-btn:hover { border-color: var(--accent-blue); }
         .choice-btn.selected { background: var(--accent-blue); border-color: var(--accent-blue); }
