@@ -33,6 +33,10 @@
             --accent-purple: #8b5cf6;
             --accent-red: #ef4444;
             --accent-yellow: #f59e0b;
+            --accent-green-bg: #ecfdf5;
+            --accent-red-bg: #fef2f2;
+            --accent-purple-bg: #f5f3ff;
+            --accent-blue-bg: #eff6ff;
             --grid-bg: #fffdf6;
             --grid-line: #c7d2e0;
             --cell-size: clamp(28px, 7.5vw, 42px);
@@ -112,28 +116,34 @@
 
         .math-grid {
             display: grid;
-            gap: 0;
+            gap: clamp(4px, 1.4vw, 9px);
             background-color: var(--grid-bg);
-            padding: calc(var(--cell-size) * 0.6);
-            border: 2px solid var(--accent-blue);
-            border-radius: 8px;
-            box-shadow: inset 0 0 15px rgba(0,0,0,0.05);
+            padding: calc(var(--cell-size) * 0.55);
+            border-radius: 12px;
+            --cell-accent: var(--accent-purple);
+            --cell-accent-bg: var(--accent-purple-bg);
         }
 
         .m-cell {
             width: var(--cell-size); height: var(--cell-size); display: flex; justify-content: center; align-items: center;
             font-size: calc(var(--cell-size) * 0.7); font-weight: bold; color: #0f172a; position: relative; font-family: monospace;
         }
-        .m-cell.plain { border: 1px solid var(--grid-line); background: rgba(148, 163, 184, 0.06); }
+        .m-cell.plain {
+            border: 2px solid var(--cell-accent);
+            border-radius: calc(var(--cell-size) * 0.22);
+            background: #ffffff;
+        }
 
         .m-input {
-            width: calc(var(--cell-size) - 2px); height: calc(var(--cell-size) - 2px); border: 2px dashed #94a3b8; background: rgba(248, 250, 252, 0.85); border-radius: 4px;
-            display: flex; justify-content: center; align-items: center; cursor: pointer; color: var(--accent-blue);
+            width: calc(var(--cell-size) - 4px); height: calc(var(--cell-size) - 4px);
+            border: 2px solid var(--cell-accent); background: var(--cell-accent-bg);
+            border-radius: calc(var(--cell-size) * 0.22);
+            display: flex; justify-content: center; align-items: center; cursor: pointer; color: var(--cell-accent);
             z-index: 5;
         }
-        .m-input.active { border-color: var(--accent-blue); background: #eff6ff; box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.4); }
-        .m-input.error { border-color: var(--accent-red); color: var(--accent-red); background: #fef2f2; }
-        .m-input.success { border-color: var(--accent-green); color: var(--accent-green); border-style: solid; }
+        .m-input.active { border-color: #1e293b; box-shadow: 0 0 0 3px rgba(30, 41, 59, 0.12); }
+        .m-input.error { border-color: var(--accent-red); color: var(--accent-red); background: var(--accent-red-bg); }
+        .m-input.success { border-color: var(--accent-green); color: var(--accent-green); background: var(--accent-green-bg); }
 
         /* Before the child reaches the actual calculation step, the answer/scratch cells
            are visible (so the problem can be read) but deliberately muted and non-interactive -
@@ -145,20 +155,23 @@
         }
 
         .m-carry {
-            width: calc(var(--cell-size) * 0.6); height: calc(var(--cell-size) * 0.6); font-size: calc(var(--cell-size) * 0.4); border: 1px solid #cbd5e1; border-radius: 50%;
-            margin: auto; background: white; cursor: pointer; color: #64748b;
+            width: calc(var(--cell-size) * 0.72); height: calc(var(--cell-size) * 0.72); font-size: calc(var(--cell-size) * 0.4);
+            border: 2px dashed var(--accent-yellow); border-radius: calc(var(--cell-size) * 0.2);
+            margin: auto; background: rgba(245, 158, 11, 0.06); cursor: pointer; color: #b45309;
             display: flex; justify-content: center; align-items: center; z-index: 5;
         }
-        .m-carry.active { border-color: var(--accent-blue); background: #eff6ff; }
-        .m-carry-subtle { opacity: 0.5; border-style: dashed; }
-        .m-carry-subtle.active { opacity: 1; border-style: solid; }
+        .m-carry.active { border-style: solid; background: rgba(245, 158, 11, 0.14); }
+        .m-carry-subtle { opacity: 0.55; }
+        .m-carry-subtle.active { opacity: 1; }
 
         .m-scratch {
-            width: calc(var(--cell-size) - 2px); height: calc(var(--cell-size) - 2px); border: 2px dashed #94a3b8; background: rgba(248, 250, 252, 0.6); border-radius: 4px;
-            display: flex; justify-content: center; align-items: center; cursor: pointer; color: #64748b;
+            width: calc(var(--cell-size) - 4px); height: calc(var(--cell-size) - 4px);
+            border: 2px dashed var(--accent-yellow); background: rgba(245, 158, 11, 0.06);
+            border-radius: calc(var(--cell-size) * 0.22);
+            display: flex; justify-content: center; align-items: center; cursor: pointer; color: #b45309;
             z-index: 5;
         }
-        .m-scratch.active { border-color: var(--accent-blue); background: #eff6ff; }
+        .m-scratch.active { border-style: solid; background: rgba(245, 158, 11, 0.14); }
 
         .m-label {
             display: flex; align-items: center; height: var(--cell-size);
@@ -909,10 +922,10 @@
         };
 
         const CAPTIONS = {
-            '+': { title: 'ЗАДАЧА ЗА СЪБИРАНЕ', hint: '✏️ Събери числата разред по разред, като започнеш отдясно наляво. Ако сборът е 10 или повече, запиши в квадратчето отгоре цифрата, която трябва да запомниш наум.', color: 'var(--accent-green)' },
-            '-': { title: 'ЗАДАЧА ЗА ИЗВАЖДАНЕ', hint: '✏️ Изваждай разред по разред отдясно наляво. Ако цифрата отгоре е по-малка, кликни върху нея, за да поставиш точка — това означава, че си заел 10 от съседния разред.', color: 'var(--accent-red)' },
-            'x': { title: 'ЗАДАЧА ЗА УМНОЖЕНИЕ', hint: '✏️ Умножавай всяка цифра от горното число по долното число, като започнеш отдясно наляво. Запиши в квадратчето отгоре цифрата, която трябва да запомниш наум.', color: 'var(--accent-purple)' },
-            ':': { title: 'ЗАДАЧА ЗА ДЕЛЕНИЕ С ОПАШКА', hint: '✏️ Запиши частното, после умножавай, изваждай и сваляй следващата цифра. Кликни върху цифра от делимото, за да поставиш или махнеш точка над нея.', color: 'var(--accent-blue)' }
+            '+': { title: 'ЗАДАЧА ЗА СЪБИРАНЕ', hint: '✏️ Събери числата разред по разред, като започнеш отдясно наляво. Ако сборът е 10 или повече, запиши в квадратчето отгоре цифрата, която трябва да запомниш наум.', color: 'var(--accent-green)', bg: 'var(--accent-green-bg)' },
+            '-': { title: 'ЗАДАЧА ЗА ИЗВАЖДАНЕ', hint: '✏️ Изваждай разред по разред отдясно наляво. Ако цифрата отгоре е по-малка, кликни върху нея, за да поставиш точка — това означава, че си заел 10 от съседния разред.', color: 'var(--accent-red)', bg: 'var(--accent-red-bg)' },
+            'x': { title: 'ЗАДАЧА ЗА УМНОЖЕНИЕ', hint: '✏️ Умножавай всяка цифра от горното число по долното число, като започнеш отдясно наляво. Запиши в квадратчето отгоре цифрата, която трябва да запомниш наум.', color: 'var(--accent-purple)', bg: 'var(--accent-purple-bg)' },
+            ':': { title: 'ЗАДАЧА ЗА ДЕЛЕНИЕ С ОПАШКА', hint: '✏️ Запиши частното, после умножавай, изваждай и сваляй следващата цифра. Кликни върху цифра от делимото, за да поставиш или махнеш точка над нея.', color: 'var(--accent-blue)', bg: 'var(--accent-blue-bg)' }
         };
 
         const Analyzer = {
@@ -1203,6 +1216,9 @@
                     document.getElementById('controls-area').classList.add('hidden-visually');
 
                     let cap = CAPTIONS[t.op];
+                    let gridEl = document.getElementById('grid-container');
+                    gridEl.style.setProperty('--cell-accent', cap.color);
+                    gridEl.style.setProperty('--cell-accent-bg', cap.bg);
                     document.getElementById('task-caption-title').innerText = cap.title;
                     document.getElementById('task-caption-dot').style.backgroundColor = cap.color;
                     // The step-by-step algorithm hint stays hidden until the child asks for
