@@ -942,6 +942,94 @@
                 if (op !== 'x' && a * b === numAns) return 'x';
                 if (op !== ':' && b !== 0 && Math.floor(a / b) === numAns) return ':';
                 return null;
+            },
+
+            // Builds a "what do you need to do here?" multiple-choice question for one
+            // place-value column, used to catch specific misconceptions (like subtracting
+            // the smaller digit from the larger one instead of borrowing) right after the
+            // child gets that column wrong.
+            columnDiagnostic: function(t, idx) {
+                let a = t.a, b = t.b, op = t.op;
+                function digitAt(n, i) { return Math.floor(Math.abs(n) / Math.pow(10, i)) % 10; }
+
+                if (op === '+') {
+                    let carry = 0;
+                    for (let i = 0; i <= idx; i++) {
+                        let sum = digitAt(a,i) + digitAt(b,i) + carry;
+                        carry = sum >= 10 ? 1 : 0;
+                    }
+                    let carryOut = carry === 1;
+                    return {
+                        type: carryOut ? 'carry_missed' : 'no_carry_confusion',
+                        question: 'Какво трябва да направиш в тази колона?',
+                        options: carryOut ? [
+                            {text:'Записвам последната цифра на сбора и пренасям 1 нататък', correct:true},
+                            {text:'Записвам целия сбор, без да пренасям нищо', correct:false},
+                            {text:'Пренасям 1, без изобщо да събирам тук', correct:false}
+                        ] : [
+                            {text:'Събирам двете цифри и записвам резултата', correct:true},
+                            {text:'Трябва задължително да пренеса 1 нататък', correct:false},
+                            {text:'Пропускам тази колона', correct:false}
+                        ],
+                        explain: carryOut
+                            ? 'Сборът тук е 10 или повече - записваш само последната му цифра и пренасяш 1 наляво.'
+                            : 'Сборът тук е под 10 - просто го записваш, без пренасяне.'
+                    };
+                }
+
+                if (op === '-') {
+                    let borrow = 0, needsBorrowHere = false;
+                    for (let i = 0; i <= idx; i++) {
+                        let topD = digitAt(a,i) - borrow;
+                        let botD = digitAt(b,i);
+                        if (topD < botD) { needsBorrowHere = (i === idx); borrow = 1; }
+                        else { if (i === idx) needsBorrowHere = false; borrow = 0; }
+                    }
+                    return {
+                        type: needsBorrowHere ? 'borrow_missed' : 'no_borrow_confusion',
+                        question: 'Какво трябва да направиш в тази колона?',
+                        options: needsBorrowHere ? [
+                            {text:'Заемам 10 от съседната цифра вляво, после изваждам', correct:true},
+                            {text:'Изваждам по-малкото от по-голямото, без да гледам реда', correct:false},
+                            {text:'Просто събирам двете цифри', correct:false}
+                        ] : [
+                            {text:'Изваждам направо: горна минус долна цифра', correct:true},
+                            {text:'Трябва задължително да заема 10', correct:false},
+                            {text:'Просто събирам двете цифри', correct:false}
+                        ],
+                        explain: needsBorrowHere
+                            ? 'Горната цифра тук е по-малка от долната - трябва да заемеш 10 от съседната колона вляво.'
+                            : 'Горната цифра тук стига, за да извадиш направо - не трябва да заемаш нищо.'
+                    };
+                }
+
+                if (op === 'x') {
+                    return {
+                        type: 'mul_step',
+                        question: 'Какво трябва да направиш в тази колона?',
+                        options: [
+                            {text:'Умножавам цифрите и добавям пренесеното от предишната стъпка', correct:true},
+                            {text:'Само умножавам, без да добавям пренесено', correct:false},
+                            {text:'Само пренасям, без да умножавам', correct:false}
+                        ],
+                        explain: 'Всяка стъпка при умножение е: умножи цифрите, после прибави пренесеното от предходната колона.'
+                    };
+                }
+
+                if (op === ':') {
+                    return {
+                        type: 'div_step',
+                        question: 'Какво трябва да направиш, за да намериш тази цифра от частното?',
+                        options: [
+                            {text:'Разделям текущото число на делителя и закръглям надолу', correct:true},
+                            {text:'Гадая произволна цифра', correct:false},
+                            {text:'Умножавам делителя по 10', correct:false}
+                        ],
+                        explain: 'На всяка стъпка делиш текущото частично число на делителя, за да намериш следващата цифра от частното.'
+                    };
+                }
+
+                return null;
             }
         };
 
@@ -1390,7 +1478,50 @@
 
                     UI.showError("Има грешка. Поправи маркираните в червено полета.");
                     Storage.logError('calc_error');
+                    this.askColumnDiagnostic();
                 }
+            },
+
+            // After a wrong answer, ask a short multiple-choice question about the specific
+            // column the child got wrong - this catches misconceptions directly (like
+            // subtracting the smaller digit from the larger one instead of borrowing)
+            // instead of just marking the box red and leaving them to guess again.
+            askColumnDiagnostic: function() {
+                let t = State.activeTask;
+                let errorEls = Array.from(document.querySelectorAll('.m-input.error'));
+                if (!errorEls.length) return;
+
+                let idxs = errorEls.map(el => parseInt(el.dataset.id.replace('in','')));
+                let targetIdx = (State.inputDirection === -1) ? Math.max(...idxs) : Math.min(...idxs);
+                let targetEl = errorEls.find(el => parseInt(el.dataset.id.replace('in','')) === targetIdx);
+                if (!targetEl) return;
+
+                let diag = Analyzer.columnDiagnostic(t, targetIdx);
+                if (!diag) return;
+
+                let targetId = targetEl.dataset.id;
+                document.getElementById('controls-area').classList.add('hidden-visually');
+                UI.setIskri(diag.question);
+                UI.showChoices(diag.options.map(o => ({text: o.text, val: o.correct})), (correct) => {
+                    let delay;
+                    if (correct) {
+                        Audio.play('coin');
+                        UI.setIskri('Точно така! Поправи цифрата в квадратчето.');
+                        delay = 900;
+                    } else {
+                        Audio.play('error');
+                        UI.setIskri(diag.explain);
+                        Storage.logError('misconception_' + diag.type);
+                        delay = 2200;
+                    }
+                    setTimeout(() => {
+                        document.getElementById('dynamic-choices').classList.add('hidden-visually');
+                        document.getElementById('controls-area').classList.remove('hidden-visually');
+                        if (document.querySelector(`[data-id="${targetId}"]`)) {
+                            UI.setActiveCell(targetId);
+                        }
+                    }, delay);
+                });
             }
         };
 
