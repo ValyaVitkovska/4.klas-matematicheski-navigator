@@ -33,8 +33,8 @@
             --accent-purple: #8b5cf6;
             --accent-red: #ef4444;
             --accent-yellow: #f59e0b;
-            --grid-bg: #ffffff;
-            --grid-line: #cbd5e1;
+            --grid-bg: #fffdf6;
+            --grid-line: #c7d2e0;
             --cell-size: clamp(28px, 7.5vw, 42px);
 
             font-family: 'Inter', system-ui, -apple-system, sans-serif;
@@ -77,13 +77,38 @@
         .btn:disabled { opacity: 0.5; cursor: not-allowed; pointer-events: none; }
 
         .iskri-container { display: flex; align-items: flex-start; gap: 1rem; margin-bottom: 1rem; background: var(--panel-bg); padding: 1rem; border-radius: 1rem; border: 1px solid var(--panel-border); }
-        .iskri-avatar { font-size: 3rem; animation: float 3s ease-in-out infinite; text-shadow: 0 0 15px rgba(59, 130, 246, 0.5); }
+        .iskri-avatar {
+            animation: float 3s ease-in-out infinite;
+            width: var(--iskri-size, 56px); height: var(--iskri-size, 56px);
+            flex: 0 0 auto; border-radius: 50%; overflow: hidden;
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.45);
+        }
+        .iskri-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        @keyframes celebrate {
+            0% { transform: scale(1) rotate(0); }
+            30% { transform: scale(1.18) rotate(-6deg); }
+            60% { transform: scale(1.05) rotate(5deg); }
+            100% { transform: scale(1) rotate(0); }
+        }
+        .iskri-avatar.celebrate { animation: celebrate 0.6s ease; }
         @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
         .iskri-bubble { flex: 1; background: var(--bg-color); padding: 1rem; border-radius: 1rem; border: 1px solid var(--accent-blue); position: relative; font-size: clamp(0.95rem, 2.3vw, 1.1rem); line-height: 1.4; min-height: 60px;}
         .iskri-bubble::before { content: ''; position: absolute; left: -10px; top: 15px; border-width: 10px 10px 10px 0; border-style: solid; border-color: transparent var(--accent-blue) transparent transparent; }
 
         .workspace { flex: 1; display: flex; flex-direction: column; min-height: 0; gap: 1rem; }
-        .math-area { flex: 1; background: var(--grid-bg); border-radius: 1rem; padding: 1rem; overflow: auto; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 1rem; position: relative; }
+        .math-area {
+            flex: 1; background: var(--grid-bg); border-radius: 0.5rem 1rem 1rem 0.5rem; padding: 1rem 1rem 1rem 2.25rem; overflow: auto;
+            display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 1rem; position: relative;
+            box-shadow: -6px 0 0 -3px rgba(0,0,0,0.05), 0 6px 18px rgba(0,0,0,0.25);
+        }
+        .math-area::before {
+            content: ''; position: absolute; left: 1.35rem; top: 0; bottom: 0; width: 2px; background: rgba(239, 68, 68, 0.28);
+        }
+        .math-area::after {
+            content: ''; position: absolute; left: 0.55rem; top: 0; bottom: 0; width: 1px;
+            background-image: radial-gradient(circle, rgba(148,163,184,0.4) 1.5px, transparent 1.5px);
+            background-size: 1px 22px; background-repeat: repeat-y;
+        }
 
         .math-grid {
             display: grid;
@@ -111,6 +136,15 @@
         .m-input.active { border-color: var(--accent-blue); background: #eff6ff; box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.4); }
         .m-input.error { border-color: var(--accent-red); color: var(--accent-red); background: #fef2f2; }
         .m-input.success { border-color: var(--accent-green); color: var(--accent-green); border-style: solid; }
+
+        /* Before the child reaches the actual calculation step, the answer/scratch cells
+           are visible (so the problem can be read) but deliberately muted and non-interactive -
+           this avoids the confusing impression that they're already active input fields. */
+        .math-grid.grid-locked .m-input,
+        .math-grid.grid-locked .m-carry,
+        .math-grid.grid-locked .m-scratch {
+            opacity: 0.3; pointer-events: none; cursor: default; border-style: dotted;
+        }
 
         .m-carry {
             width: calc(var(--cell-size) * 0.6); height: calc(var(--cell-size) * 0.6); font-size: calc(var(--cell-size) * 0.4); border: 1px solid #cbd5e1; border-radius: 50%;
@@ -216,7 +250,7 @@
             .controls-area { flex-direction: column; }
             .action-panel { flex-direction: row; width: 100%; }
             .action-panel .btn { flex: 1; }
-            .iskri-avatar { font-size: 2.2rem; }
+            .iskri-avatar { --iskri-size: 48px; }
             #site-footer { font-size: 0.58rem; }
         }
 
@@ -224,7 +258,7 @@
         @media (min-width: 381px) and (max-width: 600px) {
             .numpad { grid-template-columns: repeat(5, 1fr); }
             .choice-grid { grid-template-columns: 1fr; }
-            .iskri-avatar { font-size: 2.5rem; }
+            .iskri-avatar { --iskri-size: 56px; }
         }
 
         /* Laptops / desktops: a little extra breathing room */
@@ -253,7 +287,7 @@
 
         <div class="start-scroll">
             <div class="iskri-container" style="flex-direction: column; align-items: center; text-align: center;">
-                <div class="iskri-avatar" style="font-size: 5rem;">🤖</div>
+                <div class="iskri-avatar" style="--iskri-size: clamp(96px, 26vw, 150px);"><img src="iskri-hero.png" alt="Искри"></div>
                 <div class="iskri-bubble" style="width: 100%;">
                     Здравей! Аз съм Искри. Готов ли си за мисия? Как се казваш?
                 </div>
@@ -304,7 +338,7 @@
         </div>
 
         <div class="iskri-container">
-            <div class="iskri-avatar">🤖</div>
+            <div class="iskri-avatar"><img src="iskri-avatar.png" alt="Искри"></div>
             <div class="iskri-bubble" id="iskri-text">Анализирам задачата...</div>
         </div>
 
@@ -345,6 +379,10 @@
             <h2 style="color:var(--accent-purple)">Панел за възрастни</h2>
             <button class="btn btn-outline" id="btn-parent-close">❌ Затвори</button>
         </div>
+        <div class="iskri-container" style="margin-bottom:1rem;">
+            <div class="iskri-avatar" style="--iskri-size: 52px;"><img src="iskri-avatar.png" alt="Искри"></div>
+            <div class="iskri-bubble">Ето как върви напредъкът, докато аз помагам на детето стъпка по стъпка.</div>
+        </div>
         <div style="background: var(--panel-bg); padding: 1.5rem; border-radius: 1rem; flex:1; overflow-y:auto;">
             <div class="stat-row"><span>Име:</span><strong id="stat-name">-</strong></div>
             <div class="stat-row"><span>Решени задачи:</span><strong id="stat-tasks">0</strong></div>
@@ -370,7 +408,7 @@
     <div id="rules-modal" class="modal-overlay">
         <div class="modal-card">
             <div class="iskri-container" style="margin-bottom:1rem;">
-                <div class="iskri-avatar" style="font-size:2.5rem;">🤖</div>
+                <div class="iskri-avatar" style="--iskri-size: 64px;"><img src="iskri-avatar.png" alt="Искри"></div>
                 <div class="iskri-bubble">Здравей! Аз съм Искри, твоят навигатор в света на математиката. Ето как играем:</div>
             </div>
 
@@ -907,6 +945,7 @@
                         inner.className = cell.type === 'input' ? 'm-input' : cell.type === 'scratch' ? 'm-scratch' : (cell.type === 'carry-subtle' ? 'm-carry m-carry-subtle' : 'm-carry');
                         inner.dataset.id = cell.id;
                         inner.dataset.max = cell.max;
+                        if (cell.expected !== undefined) inner.dataset.expected = cell.expected;
                         if (cell.type === 'carry-subtle') inner.title = 'За чернова (незадължително)';
                         else if (cell.type === 'scratch') inner.title = 'За изчисленията (незадължително)';
                         else if (cell.type === 'carry' && cell.max == 2) inner.title = 'Запиши тук, ако заемаш (напр. 10)';
@@ -916,10 +955,6 @@
                     }
                     c.appendChild(div);
                 });
-
-                // Select first input automatically
-                let firstInp = cells.find(c => c.type === 'input' && c.id === 'in0');
-                if(firstInp) this.setActiveCell(firstInp.id);
             },
             setActiveCell: function(id) {
                 document.querySelectorAll('.m-input, .m-carry, .m-scratch').forEach(el => el.classList.remove('active'));
@@ -970,6 +1005,14 @@
                 Audio.play('success');
                 const b = document.getElementById('iskri-text');
                 b.innerHTML = `<span style="color:var(--accent-green)">✅ ${msg}</span>`;
+            },
+            celebrate: function() {
+                document.querySelectorAll('.screen.active .iskri-avatar').forEach(el => {
+                    el.classList.remove('celebrate');
+                    void el.offsetWidth; // restart animation if triggered again quickly
+                    el.classList.add('celebrate');
+                    setTimeout(() => el.classList.remove('celebrate'), 650);
+                });
             }
         };
 
@@ -1001,6 +1044,7 @@
                     State.mode = document.querySelector('.mode-btn.selected').dataset.mode;
                     State.taskCount = 0;
                     State.usedTasks = new Set();
+                    document.getElementById('btn-hint').style.display = (State.mode === 'solo') ? 'none' : '';
 
                     UI.showScreen('screen-game');
                     this.nextTask();
@@ -1025,6 +1069,7 @@
                 });
 
                 document.getElementById('btn-check').onclick = () => this.checkStep();
+                document.getElementById('btn-hint').onclick = () => this.giveHint();
                 document.getElementById('btn-home').onclick = () => UI.showScreen('screen-start');
 
                 // Parent Screen Logic
@@ -1070,6 +1115,7 @@
                 if(State.taskCount >= this.missionLength()) {
                     let ml = this.missionLength();
                     UI.setIskri(`Мисията е успешна! Печелиш +${ml} ⚡. Избери ново ниво от Начало.`);
+                    UI.celebrate();
                     Storage.data.energy += ml;
                     Storage.save();
                     UI.updateEnergy();
@@ -1100,6 +1146,7 @@
 
                 if (stepName === 'VIJ') {
                     UI.renderGrid(t.cells, t.cols, t.rows);
+                    document.getElementById('grid-container').classList.add('grid-locked');
                     document.getElementById('controls-area').classList.add('hidden-visually');
 
                     const CAPTIONS = {
@@ -1114,13 +1161,20 @@
                     document.getElementById('task-caption-dot').style.backgroundColor = cap.color;
                     document.getElementById('task-caption').classList.remove('hidden-visually');
 
+                    // Самостоятелен режим: без въпрос за действието и без прогноза -
+                    // детето решава направо, без междинни проверки.
+                    if (State.mode === 'solo') {
+                        this.setStep('CALC');
+                        return;
+                    }
+
                     UI.setIskri(`Задача ${State.taskCount + 1} от ${this.missionLength()}. Огледай задачата. Какво е действието?`);
                     UI.showChoices([
                         {text: '➕ Събиране', val: '+'}, {text: '➖ Изваждане', val: '-'},
                         {text: '✖️ Умножение', val: 'x'}, {text: '➗ Деление', val: ':'}
                     ], (val) => {
                         if(val === t.op) {
-                            Audio.play('coin'); Storage.data.energy++; Storage.data.stats.ops++; UI.updateEnergy();
+                            Audio.play('coin'); Storage.data.energy++; Storage.data.stats.ops++; Storage.data.stats.steps++; UI.updateEnergy();
                             this.setStep('PREDICT');
                         } else {
                             UI.showError('Разгледай пак знака в задачата.'); Storage.logError('wrong_op_choice');
@@ -1136,7 +1190,7 @@
                             {text: `Равен на ${t.a}`, val: '='}
                         ], (val) => {
                             let correct = (t.op==='+' && t.b>0 && val==='>') || (t.op==='-' && t.b>0 && val==='<') || (t.b===0 && val==='=');
-                            if(correct) { Audio.play('coin'); this.setStep('CALC'); }
+                            if(correct) { Audio.play('coin'); Storage.data.stats.steps++; this.setStep('CALC'); }
                             else { UI.showError('Помисли пак. Ако добавяме, става повече. Ако махаме - по-малко.'); }
                         });
                     } else {
@@ -1144,7 +1198,10 @@
                     }
                 }
                 else if (stepName === 'CALC') {
-                    let actionText = State.mode === 'navigator' ? 'Какво следва? Въведи отговора в полетата.' : 'Пресметни.';
+                    document.getElementById('grid-container').classList.remove('grid-locked');
+                    let actionText = State.mode === 'navigator' ? 'Какво следва? Въведи отговора в полетата.'
+                        : State.mode === 'hint' ? 'Пресметни. Ако се затрудниш, използвай бутона „Помощ".'
+                        : 'Реши самостоятелно.';
                     UI.setIskri(actionText);
                     document.getElementById('dynamic-choices').classList.add('hidden-visually');
                     document.getElementById('controls-area').classList.remove('hidden-visually');
@@ -1152,6 +1209,28 @@
                     let firstInp = t.cells.find(c => c.type === 'input' && c.id === 'in0');
                     if(firstInp) UI.setActiveCell(firstInp.id);
                 }
+            },
+
+            giveHint: function() {
+                if (State.step !== 'CALC' || State.mode === 'solo') return;
+
+                // Only reveal graded answer cells (.m-input) - carry/scratch boxes have no
+                // fixed correct value, so hinting there wouldn't mean anything.
+                let el = document.querySelector(`[data-id="${State.activeCellId}"].m-input`);
+                if (!el || el.classList.contains('success')) {
+                    el = document.querySelector('.m-input:not(.success)');
+                }
+                if (!el) return;
+
+                UI.setActiveCell(el.dataset.id);
+                el.innerText = el.dataset.expected;
+                el.classList.remove('error');
+
+                Storage.data.stats.hints++;
+                Storage.save();
+                Audio.play('coin');
+                UI.setIskri(`Ето една цифра: <strong>${el.dataset.expected}</strong>. Продължи със следващото квадратче.`);
+                UI.advanceFocus();
             },
 
             checkStep: function() {
@@ -1177,8 +1256,10 @@
 
                 if(allCorrect) {
                     UI.showSuccess("Чудесно! Реши я правилно.");
+                    UI.celebrate();
                     Storage.data.stats.tasks++;
                     if(!State.hadErrorOnStep) { Storage.data.energy += 2; UI.updateEnergy(); }
+                    else { Storage.data.stats.fixes++; }
                     Storage.save();
 
                     setTimeout(() => {
