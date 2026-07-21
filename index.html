@@ -619,11 +619,14 @@
                     a = Math.floor(Math.random()*80)+11; b = Math.floor(Math.random()*8)+2;
                     let res = this.mul(a, b); cells = res.cells; dim = res.dim;
                 }
-                else if (level == 6) { // Division with navigator: long division ("с опашка")
+                else if (level == 6) { // Division with navigator: long division with a
+                                        // 3- or 4-digit divisor ("с опашка")
                     op = ':';
-                    b = Math.floor(Math.random()*7)+2; // 2-8
-                    let q;
-                    do { q = Math.floor(Math.random()*10)+3; a = b*q; } while (a < 10 || a > 96); // keep a clean 2-digit dividend
+                    let divisorDigits = Math.random() < 0.5 ? 3 : 4;
+                    b = divisorDigits === 3 ? Math.floor(Math.random()*900)+100   // 100-999
+                                             : Math.floor(Math.random()*9000)+1000; // 1000-9999
+                    let q = Math.floor(Math.random()*9)+2; // quotient 2-10
+                    a = b * q;
                     let res = this.division(a, b); cells = res.cells; dim = res.dim;
                 }
                 else { // Level 7: independent mission - full mixed review, plus two-digit
