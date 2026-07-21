@@ -533,10 +533,25 @@
                     do { q = Math.floor(Math.random()*10)+3; a = b*q; } while (a < 10 || a > 96); // keep a clean 2-digit dividend
                     let res = this.division(a, b); cells = res.cells; dim = res.dim;
                 }
-                else { // Level 7+: independent mission - a harder, varied mix (skews toward tougher levels)
-                    const pool = [2,3,3,4,4,5,5,6,6,6];
-                    let pick = pool[Math.floor(Math.random()*pool.length)];
-                    return this.createTask(pick);
+                else { // Level 7: independent mission - full mixed review, plus two-digit
+                       // multiplier/divisor challenges (the "hardest" written-arithmetic forms)
+                    const roll = Math.random();
+                    if (roll < 0.15) { // Long multiplication with a two-digit multiplier, e.g. 82 × 15
+                        op = 'x';
+                        a = Math.floor(Math.random()*80)+10;  // 10-89
+                        b = Math.floor(Math.random()*20)+11;  // 11-30
+                        let res = this.mulLong(a, b); cells = res.cells; dim = res.dim;
+                    } else if (roll < 0.3) { // Long division with a two-digit divisor
+                        op = ':';
+                        b = Math.floor(Math.random()*23)+11; // 11-33
+                        let q = Math.floor(Math.random()*20)+3; // 3-22 (mix of 1- and 2-digit quotients)
+                        a = b * q;
+                        let res = this.division(a, b); cells = res.cells; dim = res.dim;
+                    } else { // Mixed review of everything learned so far (skews toward tougher levels)
+                        const pool = [2,3,3,4,4,5,5,6,6,6];
+                        let pick = pool[Math.floor(Math.random()*pool.length)];
+                        return this.createTask(pick);
+                    }
                 }
 
                 let ans = op==='+' ? a+b : op==='-' ? a-b : op==='x' ? a*b : Math.floor(a/b);
@@ -658,6 +673,66 @@
                 return { cells, dim: {r:2, c: maxC} };
             },
 
+            // Full written multiplication with a multi-digit multiplier (e.g. 82 × 15):
+            // multiplicand, "× multiplier", a line, one partial-product row per multiplier
+            // digit (each shifted one column left, notebook-style — no trailing zero written),
+            // a "+" row with a line, and the final sum (graded).
+            mulLong: function(a, b) {
+                let cells = [];
+                let sA = a.toString(), sB = b.toString();
+                let aLen = sA.length, bLen = sB.length;
+                let sAns = (a * b).toString();
+                let totalW = sAns.length;
+                let maxC = totalW + 1; // column 1 reserved for signs
+                let row = 1;
+
+                // Discreet carry row above the multiplicand (shared scratch aid for both steps)
+                let offsetA = maxC - aLen + 1;
+                for (let i = 0; i < aLen; i++) cells.push({id:`ca${i}`, r:row, c: offsetA+i, type:'carry-subtle', expected:'', max:2});
+                row++;
+
+                // Multiplicand
+                for (let i = 0; i < aLen; i++) cells.push({id:`a${i}`, r:row, c: offsetA+i, type:'cond', val: sA[i]});
+                row++;
+
+                // "×" sign + multiplier
+                let offsetB = maxC - bLen + 1;
+                cells.push({id:'sign', r:row, c:1, type:'cond', val:'×'});
+                for (let i = 0; i < bLen; i++) cells.push({id:`b${i}`, r:row, c: offsetB+i, type:'cond', val: sB[i]});
+                row++;
+
+                // Line under multiplicand/multiplier
+                cells.push({id:'line1', r:row, c:2, span: maxC-1, type:'line'});
+                row++;
+
+                // Partial products, least-significant multiplier digit first, each shifted
+                // one column left per position (scratch/ungraded — the aid, not the answer).
+                for (let k = 0; k < bLen; k++) {
+                    let digit = Number(sB[bLen-1-k]);
+                    let val = a * digit;
+                    let sVal = val.toString();
+                    let endCol = maxC - k;
+                    let startCol = endCol - sVal.length + 1;
+                    for (let j = 0; j < sVal.length; j++) cells.push({id:`pp${k}_${j}`, r:row, c: startCol+j, type:'scratch', expected:'', max:1});
+                    row++;
+                }
+
+                // "+" sign and line before the final sum
+                cells.push({id:'sign2', r:row, c:1, type:'cond', val:'+'});
+                cells.push({id:'line2', r:row, c:2, span: maxC-1, type:'line'});
+                row++;
+
+                // Final sum (graded)
+                let offsetAns = maxC - totalW + 1;
+                for (let i = 0; i < totalW; i++) {
+                    let revIdx = totalW - 1 - i;
+                    cells.push({id:`in${revIdx}`, r:row, c: offsetAns+i, type:'input', expected: sAns[i], max:1});
+                }
+                let lastRow = row;
+
+                return { cells, dim: { r: lastRow, c: maxC } };
+            },
+
             // Long division ("делене с опашка"): dividend | divisor, quotient below the divisor,
             // with prepared (but blank/ungraded) squares for the subtraction work at each step.
             division: function(a, b) {
@@ -670,7 +745,8 @@
                 for (let i = 0; i < digits.length; i++) {
                     remainder = remainder * 10 + digits[i];
                     if (!started && remainder < b) {
-                        if (i > 0) qDigits.push(0);
+                        // Not enough brought-down digits yet to exceed the divisor —
+                        // skip silently. No leading zero belongs in the quotient here.
                         continue;
                     }
                     started = true;
@@ -695,8 +771,9 @@
                 let colonCol = dLen + 1 + OFF;
                 cells.push({id:'colon', r:1, c: colonCol, type:'cond', val:':'});
                 let divisorCol = colonCol + 1;
-                cells.push({id:'divisor', r:1, c: divisorCol, type:'cond', val: b.toString()});
-                let eqCol = divisorCol + 1;
+                let bStr = b.toString();
+                for (let i = 0; i < bStr.length; i++) cells.push({id:`bd${i}`, r:1, c: divisorCol+i, type:'cond', val: bStr[i]});
+                let eqCol = divisorCol + bStr.length;
                 cells.push({id:'eq', r:1, c: eqCol, type:'cond', val:'='});
                 let qCol = eqCol + 1;
                 for (let i = 0; i < qStr.length; i++) {
@@ -732,10 +809,11 @@
                         lastRow = row;
                         row++;
                     } else {
-                        // Final remainder, labeled
-                        cells.push({id:'remFinal', r:row, c: endCol, type:'scratch', expected:'', max:1});
-                        cells.push({id:'remLabel', r:row, c: endCol + 1, span: 3, type:'label', val:'← остатък'});
-                        maxCol = Math.max(maxCol, endCol + 3);
+                        // Final remainder, labeled — boxes packed consecutively right under the line, no gap
+                        let remLen = Math.max(1, step.postRemainder.toString().length);
+                        for (let k = 0; k < remLen; k++) cells.push({id:`remFinal${k}`, r:row, c: startCol + k, type:'scratch', expected:'', max:1});
+                        cells.push({id:'remLabel', r:row, c: startCol + remLen, span: 3, type:'label', val:'← остатък'});
+                        maxCol = Math.max(maxCol, startCol + remLen + 2);
                         lastRow = row;
                         row++;
                     }
@@ -980,10 +1058,16 @@
                 UI.showScreen('screen-parent');
             },
 
+            // Level 7 (independent mission) runs longer since it mixes many task types.
+            missionLength: function() {
+                return (State.level == 7) ? 10 : 5;
+            },
+
             nextTask: function() {
-                if(State.taskCount >= 5) {
-                    UI.setIskri(`Мисията е успешна! Печелиш +5 ⚡. Избери ново ниво от Начало.`);
-                    Storage.data.energy += 5;
+                if(State.taskCount >= this.missionLength()) {
+                    let ml = this.missionLength();
+                    UI.setIskri(`Мисията е успешна! Печелиш +${ml} ⚡. Избери ново ниво от Начало.`);
+                    Storage.data.energy += ml;
                     Storage.save();
                     UI.updateEnergy();
                     document.getElementById('controls-area').classList.add('hidden-visually');
@@ -1027,7 +1111,7 @@
                     document.getElementById('task-caption-dot').style.backgroundColor = cap.color;
                     document.getElementById('task-caption').classList.remove('hidden-visually');
 
-                    UI.setIskri(`Задача ${State.taskCount + 1} от 5. Огледай задачата. Какво е действието?`);
+                    UI.setIskri(`Задача ${State.taskCount + 1} от ${this.missionLength()}. Огледай задачата. Какво е действието?`);
                     UI.showChoices([
                         {text: '➕ Събиране', val: '+'}, {text: '➖ Изваждане', val: '-'},
                         {text: '✖️ Умножение', val: 'x'}, {text: '➗ Деление', val: ':'}
