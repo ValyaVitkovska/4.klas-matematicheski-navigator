@@ -538,7 +538,8 @@
             activeTask: null,
             gridCells: [], gridCols: 0, gridRows: 0,
             activeCellId: null,
-            hadErrorOnStep: false
+            hadErrorOnStep: false,
+            inputDirection: 1
         };
 
         const Generators = {
@@ -892,24 +893,25 @@
                     cells.push({id:`line${idx}`, r:row, c: startCol, span: prodLen, type:'line'});
                     row++;
 
+                    // Remainder row, written directly under the line - right-aligned to the
+                    // SAME column as the subtraction above it, so it always visually connects.
+                    // (Using the digit count of postRemainder here would silently drop a leading
+                    // zero and disconnect this row from the line above it, so instead every
+                    // column between the sign and endCol gets its own box.)
+                    let remLen = endCol - startCol + 1;
+                    let remStartCol = startCol;
+                    for (let k = 0; k < remLen; k++) cells.push({id:`rem${idx}_${k}`, r:row, c: remStartCol + k, type:'scratch', expected:'', max:1});
+
                     if (idx < steps.length - 1) {
-                        // Next row shows the brought-down working value (remainder + next digit),
-                        // e.g. remainder 1 + digit 0 brought down = "10".
-                        let next = steps[idx + 1];
-                        let valLen = Math.max(1, next.workingValue.toString().length);
-                        let vEndCol = next.endPos + OFF;
-                        let vStartCol = vEndCol - valLen + 1;
-                        for (let k = 0; k < valLen; k++) cells.push({id:`v${idx}_${k}`, r:row, c: vStartCol + k, type:'scratch', expected:'', max:1});
-                        maxCol = Math.max(maxCol, vEndCol);
+                        // Bring the next dividend digit down immediately to the right of the
+                        // remainder, on the same row - exactly like on paper.
+                        let bringDownCol = endCol + 1;
+                        cells.push({id:`down${idx}`, r:row, c: bringDownCol, type:'scratch', expected:'', max:1});
+                        maxCol = Math.max(maxCol, bringDownCol);
                         lastRow = row;
                         row++;
                     } else {
-                        // Final remainder, labeled — digits packed consecutively (no internal
-                        // gaps) and right-aligned so the last digit sits under the ones column,
-                        // same as the dividend/product rows above it.
-                        let remLen = Math.max(1, step.postRemainder.toString().length);
-                        let remStartCol = endCol - remLen + 1;
-                        for (let k = 0; k < remLen; k++) cells.push({id:`remFinal${k}`, r:row, c: remStartCol + k, type:'scratch', expected:'', max:1});
+                        // Final remainder - labeled.
                         cells.push({id:'remLabel', r:row, c: endCol + 1, span: 3, type:'label', val:'← остатък'});
                         maxCol = Math.max(maxCol, endCol + 3);
                         lastRow = row;
@@ -1051,10 +1053,11 @@
                 }
             },
             advanceFocus: function() {
-                // simple heuristic: find next input id (in0 -> in1)
+                // Direction depends on the task: +/-/x are typed right-to-left (units
+                // first), division's quotient is typed left-to-right (see setStep/CALC).
                 if(State.activeCellId && State.activeCellId.startsWith('in')) {
                     let idx = parseInt(State.activeCellId.replace('in', ''));
-                    let nextId = `in${idx+1}`;
+                    let nextId = `in${idx + (State.inputDirection || 1)}`;
                     if(document.querySelector(`[data-id="${nextId}"]`)) {
                         this.setActiveCell(nextId);
                     }
@@ -1273,7 +1276,18 @@
                     document.getElementById('dynamic-choices').classList.add('hidden-visually');
                     document.getElementById('controls-area').classList.remove('hidden-visually');
 
-                    let firstInp = t.cells.find(c => c.type === 'input' && c.id === 'in0');
+                    let inputIdxs = t.cells.filter(c => c.type === 'input').map(c => parseInt(c.id.replace('in','')));
+                    let firstInp;
+                    if (t.op === ':') {
+                        // The quotient is worked out left-to-right (most significant digit
+                        // first), unlike +/-/x where the answer is built right-to-left.
+                        State.inputDirection = -1;
+                        let maxIdx = Math.max(...inputIdxs);
+                        firstInp = t.cells.find(c => c.type === 'input' && c.id === `in${maxIdx}`);
+                    } else {
+                        State.inputDirection = 1;
+                        firstInp = t.cells.find(c => c.type === 'input' && c.id === 'in0');
+                    }
                     if(firstInp) UI.setActiveCell(firstInp.id);
                 }
             },
