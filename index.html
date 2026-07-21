@@ -33,8 +33,12 @@
             --accent-purple: #8b5cf6;
             --accent-red: #ef4444;
             --accent-yellow: #f59e0b;
-            --grid-bg: #ffffff;
-            --grid-line: #cbd5e1;
+            --accent-green-bg: #ecfdf5;
+            --accent-red-bg: #fef2f2;
+            --accent-purple-bg: #f5f3ff;
+            --accent-blue-bg: #eff6ff;
+            --grid-bg: #fffdf6;
+            --grid-line: #c7d2e0;
             --cell-size: clamp(28px, 7.5vw, 42px);
 
             font-family: 'Inter', system-ui, -apple-system, sans-serif;
@@ -77,56 +81,97 @@
         .btn:disabled { opacity: 0.5; cursor: not-allowed; pointer-events: none; }
 
         .iskri-container { display: flex; align-items: flex-start; gap: 1rem; margin-bottom: 1rem; background: var(--panel-bg); padding: 1rem; border-radius: 1rem; border: 1px solid var(--panel-border); }
-        .iskri-avatar { font-size: 3rem; animation: float 3s ease-in-out infinite; text-shadow: 0 0 15px rgba(59, 130, 246, 0.5); }
+        .iskri-avatar {
+            animation: float 3s ease-in-out infinite;
+            width: var(--iskri-size, 56px); height: var(--iskri-size, 56px);
+            flex: 0 0 auto; border-radius: 50%; overflow: hidden;
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.45);
+        }
+        .iskri-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        @keyframes celebrate {
+            0% { transform: scale(1) rotate(0); }
+            30% { transform: scale(1.18) rotate(-6deg); }
+            60% { transform: scale(1.05) rotate(5deg); }
+            100% { transform: scale(1) rotate(0); }
+        }
+        .iskri-avatar.celebrate { animation: celebrate 0.6s ease; }
         @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
         .iskri-bubble { flex: 1; background: var(--bg-color); padding: 1rem; border-radius: 1rem; border: 1px solid var(--accent-blue); position: relative; font-size: clamp(0.95rem, 2.3vw, 1.1rem); line-height: 1.4; min-height: 60px;}
         .iskri-bubble::before { content: ''; position: absolute; left: -10px; top: 15px; border-width: 10px 10px 10px 0; border-style: solid; border-color: transparent var(--accent-blue) transparent transparent; }
 
         .workspace { flex: 1; display: flex; flex-direction: column; min-height: 0; gap: 1rem; }
-        .math-area { flex: 1; background: var(--grid-bg); border-radius: 1rem; padding: 1rem; overflow: auto; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 1rem; position: relative; }
+        .math-area {
+            flex: 1; min-height: 0; background: var(--grid-bg); border-radius: 0.5rem 1rem 1rem 0.5rem; padding: 1rem 1rem 1rem 2.25rem; overflow: auto;
+            display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 1rem; position: relative;
+            box-shadow: -6px 0 0 -3px rgba(0,0,0,0.05), 0 6px 18px rgba(0,0,0,0.25);
+        }
+        .math-area::before {
+            content: ''; position: absolute; left: 1.35rem; top: 0; bottom: 0; width: 2px; background: rgba(239, 68, 68, 0.28);
+        }
+        .math-area::after {
+            content: ''; position: absolute; left: 0.55rem; top: 0; bottom: 0; width: 1px;
+            background-image: radial-gradient(circle, rgba(148,163,184,0.4) 1.5px, transparent 1.5px);
+            background-size: 1px 22px; background-repeat: repeat-y;
+        }
 
         .math-grid {
             display: grid;
-            gap: 0;
+            gap: clamp(4px, 1.4vw, 9px);
             background-color: var(--grid-bg);
-            background-image: linear-gradient(var(--grid-line) 1px, transparent 1px), linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
-            background-size: var(--cell-size) var(--cell-size);
-            background-position: 0 0;
-            padding: var(--cell-size);
-            border: 2px solid var(--accent-blue);
-            border-radius: 8px;
-            box-shadow: inset 0 0 15px rgba(0,0,0,0.05);
+            padding: calc(var(--cell-size) * 0.55);
+            border-radius: 12px;
+            --cell-accent: var(--accent-purple);
+            --cell-accent-bg: var(--accent-purple-bg);
         }
 
         .m-cell {
             width: var(--cell-size); height: var(--cell-size); display: flex; justify-content: center; align-items: center;
             font-size: calc(var(--cell-size) * 0.7); font-weight: bold; color: #0f172a; position: relative; font-family: monospace;
         }
+        .m-cell.plain {
+            border: 2px solid var(--cell-accent);
+            border-radius: calc(var(--cell-size) * 0.22);
+            background: #ffffff;
+        }
 
         .m-input {
-            width: calc(var(--cell-size) - 2px); height: calc(var(--cell-size) - 2px); border: 2px dashed #94a3b8; background: rgba(248, 250, 252, 0.85); border-radius: 4px;
-            display: flex; justify-content: center; align-items: center; cursor: pointer; color: var(--accent-blue);
+            width: calc(var(--cell-size) - 4px); height: calc(var(--cell-size) - 4px);
+            border: 2px solid var(--cell-accent); background: var(--cell-accent-bg);
+            border-radius: calc(var(--cell-size) * 0.22);
+            display: flex; justify-content: center; align-items: center; cursor: pointer; color: var(--cell-accent);
             z-index: 5;
         }
-        .m-input.active { border-color: var(--accent-blue); background: #eff6ff; box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.4); }
-        .m-input.error { border-color: var(--accent-red); color: var(--accent-red); background: #fef2f2; }
-        .m-input.success { border-color: var(--accent-green); color: var(--accent-green); border-style: solid; }
+        .m-input.active { border-color: #1e293b; box-shadow: 0 0 0 3px rgba(30, 41, 59, 0.12); }
+        .m-input.error { border-color: var(--accent-red); color: var(--accent-red); background: var(--accent-red-bg); }
+        .m-input.success { border-color: var(--accent-green); color: var(--accent-green); background: var(--accent-green-bg); }
+
+        /* Before the child reaches the actual calculation step, the answer/scratch cells
+           are visible (so the problem can be read) but deliberately muted and non-interactive -
+           this avoids the confusing impression that they're already active input fields. */
+        .math-grid.grid-locked .m-input,
+        .math-grid.grid-locked .m-carry,
+        .math-grid.grid-locked .m-scratch {
+            opacity: 0.3; pointer-events: none; cursor: default; border-style: dotted;
+        }
 
         .m-carry {
-            width: calc(var(--cell-size) * 0.6); height: calc(var(--cell-size) * 0.6); font-size: calc(var(--cell-size) * 0.4); border: 1px solid #cbd5e1; border-radius: 50%;
-            margin: auto; background: white; cursor: pointer; color: #64748b;
+            width: calc(var(--cell-size) * 0.72); height: calc(var(--cell-size) * 0.72); font-size: calc(var(--cell-size) * 0.4);
+            border: 2px dashed var(--accent-yellow); border-radius: calc(var(--cell-size) * 0.2);
+            margin: auto; background: rgba(245, 158, 11, 0.06); cursor: pointer; color: #b45309;
             display: flex; justify-content: center; align-items: center; z-index: 5;
         }
-        .m-carry.active { border-color: var(--accent-blue); background: #eff6ff; }
-        .m-carry-subtle { opacity: 0.5; border-style: dashed; }
-        .m-carry-subtle.active { opacity: 1; border-style: solid; }
+        .m-carry.active { border-style: solid; background: rgba(245, 158, 11, 0.14); }
+        .m-carry-subtle { opacity: 0.55; }
+        .m-carry-subtle.active { opacity: 1; }
 
         .m-scratch {
-            width: calc(var(--cell-size) - 2px); height: calc(var(--cell-size) - 2px); border: 2px dashed #94a3b8; background: rgba(248, 250, 252, 0.6); border-radius: 4px;
-            display: flex; justify-content: center; align-items: center; cursor: pointer; color: #64748b;
+            width: calc(var(--cell-size) - 4px); height: calc(var(--cell-size) - 4px);
+            border: 2px dashed var(--accent-yellow); background: rgba(245, 158, 11, 0.06);
+            border-radius: calc(var(--cell-size) * 0.22);
+            display: flex; justify-content: center; align-items: center; cursor: pointer; color: #b45309;
             z-index: 5;
         }
-        .m-scratch.active { border-color: var(--accent-blue); background: #eff6ff; }
+        .m-scratch.active { border-style: solid; background: rgba(245, 158, 11, 0.14); }
 
         .m-label {
             display: flex; align-items: center; height: var(--cell-size);
@@ -216,7 +261,7 @@
             .controls-area { flex-direction: column; }
             .action-panel { flex-direction: row; width: 100%; }
             .action-panel .btn { flex: 1; }
-            .iskri-avatar { font-size: 2.2rem; }
+            .iskri-avatar { --iskri-size: 48px; }
             #site-footer { font-size: 0.58rem; }
         }
 
@@ -224,7 +269,20 @@
         @media (min-width: 381px) and (max-width: 600px) {
             .numpad { grid-template-columns: repeat(5, 1fr); }
             .choice-grid { grid-template-columns: 1fr; }
-            .iskri-avatar { font-size: 2.5rem; }
+            .iskri-avatar { --iskri-size: 56px; }
+        }
+
+        /* Tablets / landscape phones / laptops: task and controls side by side so the
+           numpad and buttons are always visible without scrolling, whatever the task's size. */
+        @media (min-width: 700px) {
+            .workspace { flex-direction: row; }
+            .math-area { flex: 1 1 60%; }
+            .controls-area {
+                flex-direction: column; flex: 0 0 auto; width: clamp(190px, 26vw, 250px);
+                height: 100%; overflow-y: auto; padding: 0;
+            }
+            .numpad { grid-template-columns: repeat(3, 1fr); }
+            .action-panel { flex-direction: column; width: 100%; }
         }
 
         /* Laptops / desktops: a little extra breathing room */
@@ -251,9 +309,14 @@
             <h1 style="color: var(--accent-blue); text-align: center; text-transform: uppercase; letter-spacing: 2px;">Математически Навигатор</h1>
         </div>
 
+        <button class="btn btn-green hidden-visually" id="btn-install" style="width:100%; margin: 0 1rem;">📲 Инсталирай на устройството</button>
+        <div id="ios-install-hint" class="hidden-visually" style="margin: 0.5rem 1rem 0; padding: 0.75rem 1rem; background: var(--panel-bg); border-radius: 0.75rem; font-size: 0.85rem; text-align:center;">
+            📲 За да инсталираш: докосни бутона <strong>Споделяне</strong> в Safari, после <strong>„Добави към Начален екран"</strong>.
+        </div>
+
         <div class="start-scroll">
             <div class="iskri-container" style="flex-direction: column; align-items: center; text-align: center;">
-                <div class="iskri-avatar" style="font-size: 5rem;">🤖</div>
+                <div class="iskri-avatar" style="--iskri-size: clamp(96px, 26vw, 150px);"><img src="iskri-hero.png" alt="Искри"></div>
                 <div class="iskri-bubble" style="width: 100%;">
                     Здравей! Аз съм Искри. Готов ли си за мисия? Как се казваш?
                 </div>
@@ -304,7 +367,7 @@
         </div>
 
         <div class="iskri-container">
-            <div class="iskri-avatar">🤖</div>
+            <div class="iskri-avatar"><img src="iskri-avatar.png" alt="Искри"></div>
             <div class="iskri-bubble" id="iskri-text">Анализирам задачата...</div>
         </div>
 
@@ -345,6 +408,10 @@
             <h2 style="color:var(--accent-purple)">Панел за възрастни</h2>
             <button class="btn btn-outline" id="btn-parent-close">❌ Затвори</button>
         </div>
+        <div class="iskri-container" style="margin-bottom:1rem;">
+            <div class="iskri-avatar" style="--iskri-size: 52px;"><img src="iskri-avatar.png" alt="Искри"></div>
+            <div class="iskri-bubble">Ето как върви напредъкът, докато аз помагам на детето стъпка по стъпка.</div>
+        </div>
         <div style="background: var(--panel-bg); padding: 1.5rem; border-radius: 1rem; flex:1; overflow-y:auto;">
             <div class="stat-row"><span>Име:</span><strong id="stat-name">-</strong></div>
             <div class="stat-row"><span>Решени задачи:</span><strong id="stat-tasks">0</strong></div>
@@ -370,7 +437,7 @@
     <div id="rules-modal" class="modal-overlay">
         <div class="modal-card">
             <div class="iskri-container" style="margin-bottom:1rem;">
-                <div class="iskri-avatar" style="font-size:2.5rem;">🤖</div>
+                <div class="iskri-avatar" style="--iskri-size: 64px;"><img src="iskri-avatar.png" alt="Искри"></div>
                 <div class="iskri-bubble">Здравей! Аз съм Искри, твоят навигатор в света на математиката. Ето как играем:</div>
             </div>
 
@@ -476,10 +543,41 @@
             activeTask: null,
             gridCells: [], gridCols: 0, gridRows: 0,
             activeCellId: null,
-            hadErrorOnStep: false
+            hadErrorOnStep: false,
+            inputDirection: 1
         };
 
         const Generators = {
+            // Collapses any row or column that has zero cells in it, so the visible grid
+            // tightly wraps the real content instead of showing large empty stretches of
+            // decorative squares. Columns are compacted using the union across ALL rows,
+            // so place-value alignment (units under units, tens under tens...) is preserved.
+            compactGrid: function(cells, dim) {
+                let usedRows = new Set(), usedCols = new Set();
+                cells.forEach(cell => {
+                    usedRows.add(cell.r);
+                    let span = cell.span || 1;
+                    for (let k = 0; k < span; k++) usedCols.add(cell.c + k);
+                });
+                let rows = Array.from(usedRows).sort((a,b) => a-b);
+                let cols = Array.from(usedCols).sort((a,b) => a-b);
+                let rowMap = {}, colMap = {};
+                rows.forEach((r,i) => rowMap[r] = i+1);
+                cols.forEach((c,i) => colMap[c] = i+1);
+
+                let newCells = cells.map(cell => {
+                    let nc = Object.assign({}, cell);
+                    nc.r = rowMap[cell.r];
+                    nc.c = colMap[cell.c];
+                    if (cell.span) {
+                        let oldEnd = cell.c + cell.span - 1;
+                        nc.span = colMap[oldEnd] - nc.c + 1;
+                    }
+                    return nc;
+                });
+                return { cells: newCells, dim: { r: rows.length, c: cols.length } };
+            },
+
             createTask: function(level) {
                 let a, b, op, cells = [], dim = {r:0, c:0};
                 let opRand = Math.random();
@@ -526,11 +624,12 @@
                     a = Math.floor(Math.random()*80)+11; b = Math.floor(Math.random()*8)+2;
                     let res = this.mul(a, b); cells = res.cells; dim = res.dim;
                 }
-                else if (level == 6) { // Division with navigator: long division ("с опашка")
+                else if (level == 6) { // Division with navigator: long division with a
+                                        // 1- or 2-digit divisor ("с опашка")
                     op = ':';
-                    b = Math.floor(Math.random()*7)+2; // 2-8
-                    let q;
-                    do { q = Math.floor(Math.random()*10)+3; a = b*q; } while (a < 10 || a > 96); // keep a clean 2-digit dividend
+                    b = Math.floor(Math.random()*98)+2; // 2-99 (one or two digits)
+                    let q = Math.floor(Math.random()*20)+3; // quotient 3-22
+                    a = b * q;
                     let res = this.division(a, b); cells = res.cells; dim = res.dim;
                 }
                 else { // Level 7: independent mission - full mixed review, plus two-digit
@@ -541,12 +640,10 @@
                         a = Math.floor(Math.random()*80)+10;  // 10-89
                         b = Math.floor(Math.random()*20)+11;  // 11-30
                         let res = this.mulLong(a, b); cells = res.cells; dim = res.dim;
-                    } else if (roll < 0.3) { // Long division with a two-digit divisor — dividend
-                                              // stays two-digit too (only 1- and 2-digit numbers)
+                    } else if (roll < 0.3) { // Long division with a two-digit divisor
                         op = ':';
                         b = Math.floor(Math.random()*23)+11; // 11-33
-                        let maxQ = Math.floor(99 / b);
-                        let q = Math.floor(Math.random()*Math.max(1, maxQ-1))+2; // keep a<=99
+                        let q = Math.floor(Math.random()*20)+3; // 3-22 (mix of 1- and 2-digit quotients)
                         a = b * q;
                         let res = this.division(a, b); cells = res.cells; dim = res.dim;
                     } else { // Mixed review of everything learned so far (skews toward tougher levels)
@@ -555,6 +652,9 @@
                         return this.createTask(pick);
                     }
                 }
+
+                let compact = this.compactGrid(cells, dim);
+                cells = compact.cells; dim = compact.dim;
 
                 let ans = op==='+' ? a+b : op==='-' ? a-b : op==='x' ? a*b : Math.floor(a/b);
                 return { a, b, op, answer: ans, cells, cols: dim.c, rows: dim.r };
@@ -799,24 +899,25 @@
                     cells.push({id:`line${idx}`, r:row, c: startCol, span: prodLen, type:'line'});
                     row++;
 
+                    // Remainder row, written directly under the line - right-aligned to the
+                    // SAME column as the subtraction above it, so it always visually connects.
+                    // (Using the digit count of postRemainder here would silently drop a leading
+                    // zero and disconnect this row from the line above it, so instead every
+                    // column between the sign and endCol gets its own box.)
+                    let remLen = endCol - startCol + 1;
+                    let remStartCol = startCol;
+                    for (let k = 0; k < remLen; k++) cells.push({id:`rem${idx}_${k}`, r:row, c: remStartCol + k, type:'scratch', expected:'', max:1});
+
                     if (idx < steps.length - 1) {
-                        // Next row shows the brought-down working value (remainder + next digit),
-                        // e.g. remainder 1 + digit 0 brought down = "10".
-                        let next = steps[idx + 1];
-                        let valLen = Math.max(1, next.workingValue.toString().length);
-                        let vEndCol = next.endPos + OFF;
-                        let vStartCol = vEndCol - valLen + 1;
-                        for (let k = 0; k < valLen; k++) cells.push({id:`v${idx}_${k}`, r:row, c: vStartCol + k, type:'scratch', expected:'', max:1});
-                        maxCol = Math.max(maxCol, vEndCol);
+                        // Bring the next dividend digit down immediately to the right of the
+                        // remainder, on the same row - exactly like on paper.
+                        let bringDownCol = endCol + 1;
+                        cells.push({id:`down${idx}`, r:row, c: bringDownCol, type:'scratch', expected:'', max:1});
+                        maxCol = Math.max(maxCol, bringDownCol);
                         lastRow = row;
                         row++;
                     } else {
-                        // Final remainder, labeled — digits packed consecutively (no internal
-                        // gaps) and right-aligned so the last digit sits under the ones column,
-                        // same as the dividend/product rows above it.
-                        let remLen = Math.max(1, step.postRemainder.toString().length);
-                        let remStartCol = endCol - remLen + 1;
-                        for (let k = 0; k < remLen; k++) cells.push({id:`remFinal${k}`, r:row, c: remStartCol + k, type:'scratch', expected:'', max:1});
+                        // Final remainder - labeled.
                         cells.push({id:'remLabel', r:row, c: endCol + 1, span: 3, type:'label', val:'← остатък'});
                         maxCol = Math.max(maxCol, endCol + 3);
                         lastRow = row;
@@ -828,6 +929,13 @@
             }
         };
 
+        const CAPTIONS = {
+            '+': { title: 'ЗАДАЧА ЗА СЪБИРАНЕ', hint: '✏️ Събери числата разред по разред, като започнеш отдясно наляво. Ако сборът е 10 или повече, запиши в квадратчето отгоре цифрата, която трябва да запомниш наум.', color: 'var(--accent-green)', bg: 'var(--accent-green-bg)' },
+            '-': { title: 'ЗАДАЧА ЗА ИЗВАЖДАНЕ', hint: '✏️ Изваждай разред по разред отдясно наляво. Ако цифрата отгоре е по-малка, кликни върху нея, за да поставиш точка — това означава, че си заел 10 от съседния разред.', color: 'var(--accent-red)', bg: 'var(--accent-red-bg)' },
+            'x': { title: 'ЗАДАЧА ЗА УМНОЖЕНИЕ', hint: '✏️ Умножавай всяка цифра от горното число по долното число, като започнеш отдясно наляво. Запиши в квадратчето отгоре цифрата, която трябва да запомниш наум.', color: 'var(--accent-purple)', bg: 'var(--accent-purple-bg)' },
+            ':': { title: 'ЗАДАЧА ЗА ДЕЛЕНИЕ С ОПАШКА', hint: '✏️ Запиши частното, после умножавай, изваждай и сваляй следващата цифра. Кликни върху цифра от делимото, за да поставиш или махнеш точка над нея.', color: 'var(--accent-blue)', bg: 'var(--accent-blue-bg)' }
+        };
+
         const Analyzer = {
             diagnoseError: function(a, b, op, ansStr) {
                 if(!ansStr || ansStr.trim() === '') return null;
@@ -836,6 +944,94 @@
                 if (op !== '-' && a >= b && a - b === numAns) return '-';
                 if (op !== 'x' && a * b === numAns) return 'x';
                 if (op !== ':' && b !== 0 && Math.floor(a / b) === numAns) return ':';
+                return null;
+            },
+
+            // Builds a "what do you need to do here?" multiple-choice question for one
+            // place-value column, used to catch specific misconceptions (like subtracting
+            // the smaller digit from the larger one instead of borrowing) right after the
+            // child gets that column wrong.
+            columnDiagnostic: function(t, idx) {
+                let a = t.a, b = t.b, op = t.op;
+                function digitAt(n, i) { return Math.floor(Math.abs(n) / Math.pow(10, i)) % 10; }
+
+                if (op === '+') {
+                    let carry = 0;
+                    for (let i = 0; i <= idx; i++) {
+                        let sum = digitAt(a,i) + digitAt(b,i) + carry;
+                        carry = sum >= 10 ? 1 : 0;
+                    }
+                    let carryOut = carry === 1;
+                    return {
+                        type: carryOut ? 'carry_missed' : 'no_carry_confusion',
+                        question: 'Какво трябва да направиш в тази колона?',
+                        options: carryOut ? [
+                            {text:'Записвам последната цифра на сбора и пренасям 1 нататък', correct:true},
+                            {text:'Записвам целия сбор, без да пренасям нищо', correct:false},
+                            {text:'Пренасям 1, без изобщо да събирам тук', correct:false}
+                        ] : [
+                            {text:'Събирам двете цифри и записвам резултата', correct:true},
+                            {text:'Трябва задължително да пренеса 1 нататък', correct:false},
+                            {text:'Пропускам тази колона', correct:false}
+                        ],
+                        explain: carryOut
+                            ? 'Сборът тук е 10 или повече - записваш само последната му цифра и пренасяш 1 наляво.'
+                            : 'Сборът тук е под 10 - просто го записваш, без пренасяне.'
+                    };
+                }
+
+                if (op === '-') {
+                    let borrow = 0, needsBorrowHere = false;
+                    for (let i = 0; i <= idx; i++) {
+                        let topD = digitAt(a,i) - borrow;
+                        let botD = digitAt(b,i);
+                        if (topD < botD) { needsBorrowHere = (i === idx); borrow = 1; }
+                        else { if (i === idx) needsBorrowHere = false; borrow = 0; }
+                    }
+                    return {
+                        type: needsBorrowHere ? 'borrow_missed' : 'no_borrow_confusion',
+                        question: 'Какво трябва да направиш в тази колона?',
+                        options: needsBorrowHere ? [
+                            {text:'Заемам 10 от съседната цифра вляво, после изваждам', correct:true},
+                            {text:'Изваждам по-малкото от по-голямото, без да гледам реда', correct:false},
+                            {text:'Просто събирам двете цифри', correct:false}
+                        ] : [
+                            {text:'Изваждам направо: горна минус долна цифра', correct:true},
+                            {text:'Трябва задължително да заема 10', correct:false},
+                            {text:'Просто събирам двете цифри', correct:false}
+                        ],
+                        explain: needsBorrowHere
+                            ? 'Горната цифра тук е по-малка от долната - трябва да заемеш 10 от съседната колона вляво.'
+                            : 'Горната цифра тук стига, за да извадиш направо - не трябва да заемаш нищо.'
+                    };
+                }
+
+                if (op === 'x') {
+                    return {
+                        type: 'mul_step',
+                        question: 'Какво трябва да направиш в тази колона?',
+                        options: [
+                            {text:'Умножавам цифрите и добавям пренесеното от предишната стъпка', correct:true},
+                            {text:'Само умножавам, без да добавям пренесено', correct:false},
+                            {text:'Само пренасям, без да умножавам', correct:false}
+                        ],
+                        explain: 'Всяка стъпка при умножение е: умножи цифрите, после прибави пренесеното от предходната колона.'
+                    };
+                }
+
+                if (op === ':') {
+                    return {
+                        type: 'div_step',
+                        question: 'Какво трябва да направиш, за да намериш тази цифра от частното?',
+                        options: [
+                            {text:'Разделям текущото число на делителя и закръглям надолу', correct:true},
+                            {text:'Гадая произволна цифра', correct:false},
+                            {text:'Умножавам делителя по 10', correct:false}
+                        ],
+                        explain: 'На всяка стъпка делиш текущото частично число на делителя, за да намериш следващата цифра от частното.'
+                    };
+                }
+
                 return null;
             }
         };
@@ -898,8 +1094,10 @@
                     div.className = 'm-cell';
 
                     if(cell.type === 'cond') {
+                        div.className += ' plain';
                         div.innerText = cell.val;
                     } else if(cell.type === 'borrow-dot') {
+                        div.className += ' plain';
                         div.innerText = cell.val;
                         div.style.cursor = 'pointer';
                         div.title = "Кликни за точка (заемане)";
@@ -909,6 +1107,7 @@
                         inner.className = cell.type === 'input' ? 'm-input' : cell.type === 'scratch' ? 'm-scratch' : (cell.type === 'carry-subtle' ? 'm-carry m-carry-subtle' : 'm-carry');
                         inner.dataset.id = cell.id;
                         inner.dataset.max = cell.max;
+                        if (cell.expected !== undefined) inner.dataset.expected = cell.expected;
                         if (cell.type === 'carry-subtle') inner.title = 'За чернова (незадължително)';
                         else if (cell.type === 'scratch') inner.title = 'За изчисленията (незадължително)';
                         else if (cell.type === 'carry' && cell.max == 2) inner.title = 'Запиши тук, ако заемаш (напр. 10)';
@@ -918,10 +1117,6 @@
                     }
                     c.appendChild(div);
                 });
-
-                // Select first input automatically
-                let firstInp = cells.find(c => c.type === 'input' && c.id === 'in0');
-                if(firstInp) this.setActiveCell(firstInp.id);
             },
             setActiveCell: function(id) {
                 document.querySelectorAll('.m-input, .m-carry, .m-scratch').forEach(el => el.classList.remove('active'));
@@ -952,10 +1147,11 @@
                 }
             },
             advanceFocus: function() {
-                // simple heuristic: find next input id (in0 -> in1)
+                // Direction depends on the task: +/-/x are typed right-to-left (units
+                // first), division's quotient is typed left-to-right (see setStep/CALC).
                 if(State.activeCellId && State.activeCellId.startsWith('in')) {
                     let idx = parseInt(State.activeCellId.replace('in', ''));
-                    let nextId = `in${idx+1}`;
+                    let nextId = `in${idx + (State.inputDirection || 1)}`;
                     if(document.querySelector(`[data-id="${nextId}"]`)) {
                         this.setActiveCell(nextId);
                     }
@@ -972,6 +1168,14 @@
                 Audio.play('success');
                 const b = document.getElementById('iskri-text');
                 b.innerHTML = `<span style="color:var(--accent-green)">✅ ${msg}</span>`;
+            },
+            celebrate: function() {
+                document.querySelectorAll('.screen.active .iskri-avatar').forEach(el => {
+                    el.classList.remove('celebrate');
+                    void el.offsetWidth; // restart animation if triggered again quickly
+                    el.classList.add('celebrate');
+                    setTimeout(() => el.classList.remove('celebrate'), 650);
+                });
             }
         };
 
@@ -1003,6 +1207,7 @@
                     State.mode = document.querySelector('.mode-btn.selected').dataset.mode;
                     State.taskCount = 0;
                     State.usedTasks = new Set();
+                    document.getElementById('btn-hint').style.display = (State.mode === 'solo') ? 'none' : '';
 
                     UI.showScreen('screen-game');
                     this.nextTask();
@@ -1027,7 +1232,10 @@
                 });
 
                 document.getElementById('btn-check').onclick = () => this.checkStep();
+                document.getElementById('btn-hint').onclick = () => this.giveHint();
                 document.getElementById('btn-home').onclick = () => UI.showScreen('screen-start');
+
+                this._installPromptHandlers();
 
                 // Parent Screen Logic
                 let holdTimer;
@@ -1038,6 +1246,47 @@
                 document.getElementById('btn-settings').ontouchend = () => clearTimeout(holdTimer);
 
                 document.getElementById('btn-parent-close').onclick = () => UI.showScreen('screen-start');
+            },
+
+            _installPromptHandlers: function() {
+                let installBtn = document.getElementById('btn-install');
+                let iosHint = document.getElementById('ios-install-hint');
+
+                let isStandalone = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches)
+                    || window.navigator.standalone === true;
+                if (isStandalone) return; // already installed - nothing to show
+
+                let ua = window.navigator.userAgent.toLowerCase();
+                let isIOS = /iphone|ipad|ipod/.test(ua);
+
+                if (isIOS) {
+                    // Safari on iOS has no programmatic install prompt - show a short
+                    // instruction instead of a button that would otherwise do nothing.
+                    iosHint.classList.remove('hidden-visually');
+                    return;
+                }
+
+                // Android / desktop Chrome, Edge etc. - capture the native prompt and
+                // trigger it ourselves from our own button.
+                let deferredPrompt = null;
+                window.addEventListener('beforeinstallprompt', (e) => {
+                    e.preventDefault();
+                    deferredPrompt = e;
+                    installBtn.classList.remove('hidden-visually');
+                });
+
+                installBtn.onclick = async () => {
+                    if (!deferredPrompt) return;
+                    deferredPrompt.prompt();
+                    await deferredPrompt.userChoice;
+                    deferredPrompt = null;
+                    installBtn.classList.add('hidden-visually');
+                };
+
+                window.addEventListener('appinstalled', () => {
+                    installBtn.classList.add('hidden-visually');
+                    deferredPrompt = null;
+                });
             },
 
             openRules: function() {
@@ -1072,6 +1321,7 @@
                 if(State.taskCount >= this.missionLength()) {
                     let ml = this.missionLength();
                     UI.setIskri(`Мисията е успешна! Печелиш +${ml} ⚡. Избери ново ниво от Начало.`);
+                    UI.celebrate();
                     Storage.data.energy += ml;
                     Storage.save();
                     UI.updateEnergy();
@@ -1102,19 +1352,28 @@
 
                 if (stepName === 'VIJ') {
                     UI.renderGrid(t.cells, t.cols, t.rows);
+                    document.getElementById('grid-container').classList.add('grid-locked');
                     document.getElementById('controls-area').classList.add('hidden-visually');
 
-                    const CAPTIONS = {
-                        '+': { title: 'ЗАДАЧА ЗА СЪБИРАНЕ', hint: '✏️ Събери числата разред по разред, като започнеш отдясно наляво. Ако сборът е 10 или повече, запиши в квадратчето отгоре цифрата, която трябва да запомниш наум.', color: 'var(--accent-green)' },
-                        '-': { title: 'ЗАДАЧА ЗА ИЗВАЖДАНЕ', hint: '✏️ Изваждай разред по разред отдясно наляво. Ако цифрата отгоре е по-малка, кликни върху нея, за да поставиш точка — това означава, че си заел 10 от съседния разред.', color: 'var(--accent-red)' },
-                        'x': { title: 'ЗАДАЧА ЗА УМНОЖЕНИЕ', hint: '✏️ Умножавай всяка цифра от горното число по долното число, като започнеш отдясно наляво. Запиши в квадратчето отгоре цифрата, която трябва да запомниш наум.', color: 'var(--accent-purple)' },
-                        ':': { title: 'ЗАДАЧА ЗА ДЕЛЕНИЕ С ОПАШКА', hint: '✏️ Запиши частното, после умножавай, изваждай и сваляй следващата цифра. Кликни върху цифра от делимото, за да поставиш или махнеш точка над нея.', color: 'var(--accent-blue)' }
-                    };
                     let cap = CAPTIONS[t.op];
+                    let gridEl = document.getElementById('grid-container');
+                    gridEl.style.setProperty('--cell-accent', cap.color);
+                    gridEl.style.setProperty('--cell-accent-bg', cap.bg);
                     document.getElementById('task-caption-title').innerText = cap.title;
-                    document.getElementById('task-caption-hint').innerText = cap.hint;
                     document.getElementById('task-caption-dot').style.backgroundColor = cap.color;
+                    // The step-by-step algorithm hint stays hidden until the child asks for
+                    // help - the goal is for them to figure it out first.
+                    let hintEl = document.getElementById('task-caption-hint');
+                    hintEl.innerText = '';
+                    hintEl.classList.add('hidden-visually');
                     document.getElementById('task-caption').classList.remove('hidden-visually');
+
+                    // Самостоятелен режим: без въпрос за действието и без прогноза -
+                    // детето решава направо, без междинни проверки.
+                    if (State.mode === 'solo') {
+                        this.setStep('CALC');
+                        return;
+                    }
 
                     UI.setIskri(`Задача ${State.taskCount + 1} от ${this.missionLength()}. Огледай задачата. Какво е действието?`);
                     UI.showChoices([
@@ -1122,7 +1381,7 @@
                         {text: '✖️ Умножение', val: 'x'}, {text: '➗ Деление', val: ':'}
                     ], (val) => {
                         if(val === t.op) {
-                            Audio.play('coin'); Storage.data.energy++; Storage.data.stats.ops++; UI.updateEnergy();
+                            Audio.play('coin'); Storage.data.energy++; Storage.data.stats.ops++; Storage.data.stats.steps++; UI.updateEnergy();
                             this.setStep('PREDICT');
                         } else {
                             UI.showError('Разгледай пак знака в задачата.'); Storage.logError('wrong_op_choice');
@@ -1138,7 +1397,7 @@
                             {text: `Равен на ${t.a}`, val: '='}
                         ], (val) => {
                             let correct = (t.op==='+' && t.b>0 && val==='>') || (t.op==='-' && t.b>0 && val==='<') || (t.b===0 && val==='=');
-                            if(correct) { Audio.play('coin'); this.setStep('CALC'); }
+                            if(correct) { Audio.play('coin'); Storage.data.stats.steps++; this.setStep('CALC'); }
                             else { UI.showError('Помисли пак. Ако добавяме, става повече. Ако махаме - по-малко.'); }
                         });
                     } else {
@@ -1146,14 +1405,66 @@
                     }
                 }
                 else if (stepName === 'CALC') {
-                    let actionText = State.mode === 'navigator' ? 'Какво следва? Въведи отговора в полетата.' : 'Пресметни.';
+                    document.getElementById('grid-container').classList.remove('grid-locked');
+                    let actionText = State.mode === 'navigator' ? 'Какво следва? Въведи отговора в полетата.'
+                        : State.mode === 'hint' ? 'Пресметни. Ако се затрудниш, използвай бутона „Помощ".'
+                        : 'Реши самостоятелно.';
                     UI.setIskri(actionText);
                     document.getElementById('dynamic-choices').classList.add('hidden-visually');
                     document.getElementById('controls-area').classList.remove('hidden-visually');
 
-                    let firstInp = t.cells.find(c => c.type === 'input' && c.id === 'in0');
+                    let inputIdxs = t.cells.filter(c => c.type === 'input').map(c => parseInt(c.id.replace('in','')));
+                    let firstInp;
+                    if (t.op === ':') {
+                        // The quotient is worked out left-to-right (most significant digit
+                        // first), unlike +/-/x where the answer is built right-to-left.
+                        State.inputDirection = -1;
+                        let maxIdx = Math.max(...inputIdxs);
+                        firstInp = t.cells.find(c => c.type === 'input' && c.id === `in${maxIdx}`);
+                    } else {
+                        State.inputDirection = 1;
+                        firstInp = t.cells.find(c => c.type === 'input' && c.id === 'in0');
+                    }
                     if(firstInp) UI.setActiveCell(firstInp.id);
                 }
+            },
+
+            giveHint: function() {
+                if (State.step !== 'CALC' || State.mode === 'solo') return;
+
+                let hintEl = document.getElementById('task-caption-hint');
+
+                if (hintEl.classList.contains('hidden-visually')) {
+                    // First press for this task: reveal the step-by-step strategy text,
+                    // which stays hidden by default so the child tries on their own first.
+                    let cap = CAPTIONS[State.activeTask.op];
+                    hintEl.innerText = cap.hint;
+                    hintEl.classList.remove('hidden-visually');
+                    Storage.data.stats.hints++;
+                    Storage.save();
+                    UI.setIskri('Виж подсказката над решетката. 👆');
+                    return;
+                }
+
+                // Hint was already shown once and the child is still stuck -
+                // reveal one digit as a more concrete nudge.
+                // Only reveal graded answer cells (.m-input) - carry/scratch boxes have no
+                // fixed correct value, so hinting there wouldn't mean anything.
+                let el = document.querySelector(`[data-id="${State.activeCellId}"].m-input`);
+                if (!el || el.classList.contains('success')) {
+                    el = document.querySelector('.m-input:not(.success)');
+                }
+                if (!el) return;
+
+                UI.setActiveCell(el.dataset.id);
+                el.innerText = el.dataset.expected;
+                el.classList.remove('error');
+
+                Storage.data.stats.hints++;
+                Storage.save();
+                Audio.play('coin');
+                UI.setIskri(`Ето една цифра: <strong>${el.dataset.expected}</strong>. Продължи със следващото квадратче.`);
+                UI.advanceFocus();
             },
 
             checkStep: function() {
@@ -1179,8 +1490,10 @@
 
                 if(allCorrect) {
                     UI.showSuccess("Чудесно! Реши я правилно.");
+                    UI.celebrate();
                     Storage.data.stats.tasks++;
                     if(!State.hadErrorOnStep) { Storage.data.energy += 2; UI.updateEnergy(); }
+                    else { Storage.data.stats.fixes++; }
                     Storage.save();
 
                     setTimeout(() => {
@@ -1211,7 +1524,50 @@
 
                     UI.showError("Има грешка. Поправи маркираните в червено полета.");
                     Storage.logError('calc_error');
+                    this.askColumnDiagnostic();
                 }
+            },
+
+            // After a wrong answer, ask a short multiple-choice question about the specific
+            // column the child got wrong - this catches misconceptions directly (like
+            // subtracting the smaller digit from the larger one instead of borrowing)
+            // instead of just marking the box red and leaving them to guess again.
+            askColumnDiagnostic: function() {
+                let t = State.activeTask;
+                let errorEls = Array.from(document.querySelectorAll('.m-input.error'));
+                if (!errorEls.length) return;
+
+                let idxs = errorEls.map(el => parseInt(el.dataset.id.replace('in','')));
+                let targetIdx = (State.inputDirection === -1) ? Math.max(...idxs) : Math.min(...idxs);
+                let targetEl = errorEls.find(el => parseInt(el.dataset.id.replace('in','')) === targetIdx);
+                if (!targetEl) return;
+
+                let diag = Analyzer.columnDiagnostic(t, targetIdx);
+                if (!diag) return;
+
+                let targetId = targetEl.dataset.id;
+                document.getElementById('controls-area').classList.add('hidden-visually');
+                UI.setIskri(diag.question);
+                UI.showChoices(diag.options.map(o => ({text: o.text, val: o.correct})), (correct) => {
+                    let delay;
+                    if (correct) {
+                        Audio.play('coin');
+                        UI.setIskri('Точно така! Поправи цифрата в квадратчето.');
+                        delay = 900;
+                    } else {
+                        Audio.play('error');
+                        UI.setIskri(diag.explain);
+                        Storage.logError('misconception_' + diag.type);
+                        delay = 2200;
+                    }
+                    setTimeout(() => {
+                        document.getElementById('dynamic-choices').classList.add('hidden-visually');
+                        document.getElementById('controls-area').classList.remove('hidden-visually');
+                        if (document.querySelector(`[data-id="${targetId}"]`)) {
+                            UI.setActiveCell(targetId);
+                        }
+                    }, delay);
+                });
             }
         };
 
