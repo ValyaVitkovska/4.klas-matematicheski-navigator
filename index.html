@@ -118,6 +118,15 @@
             display: flex; justify-content: center; align-items: center; z-index: 5;
         }
         .m-carry.active { border-color: var(--accent-blue); background: #eff6ff; }
+        .m-carry-subtle { opacity: 0.5; border-style: dashed; }
+        .m-carry-subtle.active { opacity: 1; border-style: solid; }
+
+        .m-scratch {
+            width: calc(var(--cell-size) - 2px); height: calc(var(--cell-size) - 2px); border: 2px dashed #94a3b8; background: rgba(248, 250, 252, 0.6); border-radius: 4px;
+            display: flex; justify-content: center; align-items: center; cursor: pointer; color: #64748b;
+            z-index: 5;
+        }
+        .m-scratch.active { border-color: var(--accent-blue); background: #eff6ff; }
 
         .m-line { position: absolute; bottom: 0; left: 0; width: 100%; height: 3px; background: #0f172a; z-index: 10; }
 
@@ -391,6 +400,7 @@
         const State = {
             level: 1, mode: 'navigator', step: 'VIJ', // VIJ, ACTION, PREDICT, NEXT, CALC, CHECK, EVAL
             taskCount: 0,
+            usedTasks: new Set(),
             activeTask: null,
             gridCells: [], gridCols: 0, gridRows: 0,
             activeCellId: null,
@@ -404,17 +414,23 @@
 
                 if(level == 1) { // +, - to 20
                     op = opRand > 0.5 ? '+' : '-';
-                    if(op === '+') { a = Math.floor(Math.random()*10)+1; b = Math.floor(Math.random()*10)+1; }
-                    else { a = Math.floor(Math.random()*10)+10; b = Math.floor(Math.random()*10)+1; }
-                    let res = this.horizontal(a, b, op); cells = res.cells; dim = res.dim;
+                    if(op === '+') {
+                        a = Math.floor(Math.random()*10)+1; b = Math.floor(Math.random()*10)+1;
+                        let res = this.add(a, b); cells = res.cells; dim = res.dim;
+                    } else {
+                        a = Math.floor(Math.random()*10)+10; b = Math.floor(Math.random()*10)+1;
+                        let res = this.sub(a, b); cells = res.cells; dim = res.dim;
+                    }
                 }
                 else if (level == 2) { // +, - to 100
                     op = opRand > 0.5 ? '+' : '-';
-                    if(op === '+') { a = Math.floor(Math.random()*80)+10; b = Math.floor(Math.random()*(99-a))+1; }
-                    else { a = Math.floor(Math.random()*80)+20; b = Math.floor(Math.random()*(a-10))+1; }
-                    let res = Math.random() > 0.5 ? this.add(a,b) : this.horizontal(a,b,op);
-                    if(op==='-') res = this.sub(a,b);
-                    cells = res.cells; dim = res.dim;
+                    if(op === '+') {
+                        a = Math.floor(Math.random()*80)+10; b = Math.floor(Math.random()*(99-a))+1;
+                        let res = this.add(a, b); cells = res.cells; dim = res.dim;
+                    } else {
+                        a = Math.floor(Math.random()*80)+20; b = Math.floor(Math.random()*(a-10))+1;
+                        let res = this.sub(a, b); cells = res.cells; dim = res.dim;
+                    }
                 }
                 else if (level == 3) { // +, - to 1000 written
                     op = opRand > 0.5 ? '+' : '-';
@@ -425,17 +441,30 @@
                 }
                 else if (level == 4) { // Tabular *, /
                     op = opRand > 0.5 ? 'x' : ':';
-                    if(op === 'x') { a = Math.floor(Math.random()*9)+1; b = Math.floor(Math.random()*9)+1; }
-                    else { b = Math.floor(Math.random()*9)+1; let q = Math.floor(Math.random()*9)+1; a = b * q; }
-                    let res = this.horizontal(a, b, op); cells = res.cells; dim = res.dim;
+                    if(op === 'x') {
+                        a = Math.floor(Math.random()*9)+1; b = Math.floor(Math.random()*9)+1;
+                        let res = this.mul(a, b); cells = res.cells; dim = res.dim;
+                    } else {
+                        b = Math.floor(Math.random()*9)+1; let q = Math.floor(Math.random()*9)+1; a = b * q;
+                        let res = this.horizontal(a, b, op); cells = res.cells; dim = res.dim;
+                    }
                 }
                 else if (level == 5) { // Long multiplication
                     op = 'x';
                     a = Math.floor(Math.random()*80)+11; b = Math.floor(Math.random()*8)+2;
                     let res = this.mul(a, b); cells = res.cells; dim = res.dim;
                 }
-                else { // Fallback
-                    a = 10; b = 5; op = '+'; let res = this.horizontal(a,b,op); cells = res.cells; dim = res.dim;
+                else if (level == 6) { // Division with navigator: long division ("с опашка")
+                    op = ':';
+                    b = Math.floor(Math.random()*7)+2; // 2-8
+                    let q;
+                    do { q = Math.floor(Math.random()*10)+3; a = b*q; } while (a < 10 || a > 96); // keep a clean 2-digit dividend
+                    let res = this.division(a, b); cells = res.cells; dim = res.dim;
+                }
+                else { // Level 7+: independent mission - a harder, varied mix (skews toward tougher levels)
+                    const pool = [2,3,3,4,4,5,5,6,6,6];
+                    let pick = pool[Math.floor(Math.random()*pool.length)];
+                    return this.createTask(pick);
                 }
 
                 let ans = op==='+' ? a+b : op==='-' ? a-b : op==='x' ? a*b : Math.floor(a/b);
@@ -445,10 +474,32 @@
             horizontal: function(a, b, op) {
                 let cells = [];
                 let str = `${a} ${op === 'x' ? '·' : op} ${b} = `;
-                for(let i=0; i<str.length; i++) cells.push({id:`c${i}`, r:2, c:i+1, type:'cond', val:str[i]});
+                let sA = a.toString();
+                for(let i=0; i<str.length; i++) {
+                    // The first sA.length characters are the digits of 'a'.
+                    if (op === '-' && i < sA.length) {
+                        cells.push({id:`c${i}`, r:2, c:i+1, type:'borrow-dot', val:str[i]});
+                    } else {
+                        cells.push({id:`c${i}`, r:2, c:i+1, type:'cond', val:str[i]});
+                    }
+                }
                 let ansStr = (op==='+'?a+b : op==='-'?a-b : op==='x'?a*b : a/b).toString();
                 let startC = str.length + 1;
                 for(let i=0; i<ansStr.length; i++) cells.push({id:`in${i}`, r:2, c:startC+i, type:'input', expected:ansStr[i], max:1});
+
+                // Optional scratch row above the first operand, so pupils can note the calculation
+                // the same way they would on paper - without it being required or graded.
+                if (op === '-' && sA.length > 1) {
+                    // A box above every digit for writing the borrowed value (e.g. "10").
+                    for(let i=0; i<sA.length; i++) cells.push({id:`ca${i}`, r:1, c:i+1, type:'carry', expected:'', max:2});
+                } else if (op === '+') {
+                    // A small box above every digit for the carried digit to remember.
+                    for(let i=0; i<sA.length; i++) cells.push({id:`ca${i}`, r:1, c:i+1, type:'carry', expected:'', max:1});
+                } else if (op === 'x' || op === ':') {
+                    // A single, more discreet scratch box - not tied to a specific digit.
+                    cells.push({id:'ca0', r:1, c:1, type:'carry-subtle', expected:'', max:2});
+                }
+
                 return { cells, dim: {r:3, c: startC+ansStr.length} };
             },
 
@@ -537,6 +588,64 @@
                      cells.push({id:`in${revIdx}`, r:r, c:offsetAns+i, type:'input', expected:sAns[i], max:1});
                 }
                 return { cells, dim: {r:r, c: maxC} };
+            },
+
+            // Long division ("делене с опашка"): dividend | divisor, quotient below the divisor,
+            // with prepared (but blank/ungraded) squares for the subtraction work at each step.
+            division: function(a, b) {
+                let sA = a.toString();
+                let digits = sA.split('').map(Number);
+                let steps = []; // { endPos, product }
+                let remainder = 0;
+                let started = false;
+                let qDigits = [];
+                for (let i = 0; i < digits.length; i++) {
+                    remainder = remainder * 10 + digits[i];
+                    if (!started && remainder < b) {
+                        if (i > 0) qDigits.push(0);
+                        continue;
+                    }
+                    started = true;
+                    let qDigit = Math.floor(remainder / b);
+                    let product = qDigit * b;
+                    qDigits.push(qDigit);
+                    steps.push({ endPos: i + 1, product });
+                    remainder = remainder - product;
+                }
+                let qStr = qDigits.join('');
+                let cells = [];
+                let dLen = sA.length;
+                const OFF = 1; // reserve column 1 so minus signs always fit
+
+                for (let i = 0; i < dLen; i++) cells.push({id:`d${i}`, r:1, c: i+1+OFF, type:'cond', val: sA[i]});
+                let barCol = dLen + 1 + OFF;
+                cells.push({id:'bar', r:1, c: barCol, type:'cond', val:'⏐'});
+                let qCol = barCol + 1;
+                cells.push({id:'divisor', r:1, c: qCol, type:'cond', val: b.toString()});
+                for (let i = 0; i < qStr.length; i++) {
+                    let revIdx = qStr.length - 1 - i;
+                    cells.push({id:`in${revIdx}`, r:2, c: qCol + i, type:'input', expected: qStr[i], max:1});
+                }
+
+                let lastRow = 2;
+                let maxCol = Math.max(dLen + OFF, qCol + qStr.length - 1);
+                let row = 3;
+                steps.forEach((step, idx) => {
+                    let prodLen = Math.max(1, step.product.toString().length);
+                    let endCol = step.endPos + OFF;
+                    let startCol = endCol - prodLen + 1;
+                    cells.push({id:`sign${idx}`, r:row, c: startCol - 1, type:'cond', val:'-'});
+                    for (let k = 0; k < prodLen; k++) cells.push({id:`p${idx}_${k}`, r:row, c: startCol + k, type:'scratch', expected:'', max:1});
+                    row++;
+                    cells.push({id:`line${idx}`, r:row, c: startCol, span: prodLen, type:'line'});
+                    row++;
+                    cells.push({id:`rem${idx}`, r:row, c: endCol, type:'scratch', expected:'', max:1});
+                    lastRow = row;
+                    maxCol = Math.max(maxCol, endCol);
+                    row++;
+                });
+
+                return { cells, dim: { r: lastRow, c: maxCol } };
             }
         };
 
@@ -609,11 +718,15 @@
                         div.style.cursor = 'pointer';
                         div.title = "Кликни за точка (заемане)";
                         div.onclick = () => div.classList.toggle('has-dot');
-                    } else if(cell.type === 'input' || cell.type === 'carry') {
+                    } else if(cell.type === 'input' || cell.type === 'carry' || cell.type === 'carry-subtle' || cell.type === 'scratch') {
                         let inner = document.createElement('div');
-                        inner.className = cell.type === 'input' ? 'm-input' : 'm-carry';
+                        inner.className = cell.type === 'input' ? 'm-input' : cell.type === 'scratch' ? 'm-scratch' : (cell.type === 'carry-subtle' ? 'm-carry m-carry-subtle' : 'm-carry');
                         inner.dataset.id = cell.id;
                         inner.dataset.max = cell.max;
+                        if (cell.type === 'carry-subtle') inner.title = 'За чернова (незадължително)';
+                        else if (cell.type === 'scratch') inner.title = 'За изчисленията (незадължително)';
+                        else if (cell.type === 'carry' && cell.max == 2) inner.title = 'Запиши тук, ако заемаш (напр. 10)';
+                        else if (cell.type === 'carry') inner.title = 'Запомни тук';
                         inner.onclick = () => UI.setActiveCell(cell.id);
                         div.appendChild(inner);
                     }
@@ -625,7 +738,7 @@
                 if(firstInp) this.setActiveCell(firstInp.id);
             },
             setActiveCell: function(id) {
-                document.querySelectorAll('.m-input, .m-carry').forEach(el => el.classList.remove('active'));
+                document.querySelectorAll('.m-input, .m-carry, .m-scratch').forEach(el => el.classList.remove('active'));
                 let el = document.querySelector(`[data-id="${id}"]`);
                 if(el) {
                     el.classList.add('active');
@@ -698,6 +811,7 @@
                     State.level = document.getElementById('levelSelect').value;
                     State.mode = document.querySelector('.mode-btn.selected').dataset.mode;
                     State.taskCount = 0;
+                    State.usedTasks = new Set();
 
                     UI.showScreen('screen-game');
                     this.nextTask();
@@ -760,7 +874,15 @@
                     return;
                 }
 
-                State.activeTask = Generators.createTask(State.level);
+                let task, signature, attempts = 0;
+                do {
+                    task = Generators.createTask(State.level);
+                    signature = `${task.op}|${task.a}|${task.b}`;
+                    attempts++;
+                } while (State.usedTasks.has(signature) && attempts < 40);
+                State.usedTasks.add(signature);
+
+                State.activeTask = task;
                 State.hadErrorOnStep = false;
                 this.setStep('VIJ');
             },
