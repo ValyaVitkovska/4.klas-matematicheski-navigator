@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mathnav-cache-v20';
+const CACHE_NAME = 'mathnav-cache-v14';
 const ASSETS = [
   './',
   './index.html',
@@ -9,9 +9,7 @@ const ASSETS = [
   './icon-512-maskable.png',
   './apple-touch-icon.png',
   './favicon.png',
-  './logo-vb.png',
-  './iskri-hero.png',
-  './iskri-avatar.png'
+  './logo-vb.png'
 ];
 
 self.addEventListener('install', (event) => {
