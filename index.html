@@ -35,6 +35,7 @@
             --accent-yellow: #f59e0b;
             --grid-bg: #ffffff;
             --grid-line: #cbd5e1;
+            --cell-size: clamp(28px, 7.5vw, 42px);
 
             font-family: 'Inter', system-ui, -apple-system, sans-serif;
         }
@@ -65,8 +66,8 @@
 
         .btn {
             background: var(--accent-blue); color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 0.75rem;
-            font-size: 1.1rem; font-weight: bold; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 0 rgba(0,0,0,0.2);
-            display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
+            font-size: clamp(1rem, 2.2vw, 1.2rem); font-weight: bold; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 0 rgba(0,0,0,0.2);
+            display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; min-height: 44px;
         }
         .btn:active { transform: translateY(4px); box-shadow: 0 0 0 rgba(0,0,0,0); }
         .btn-green { background: var(--accent-green); }
@@ -78,7 +79,7 @@
         .iskri-container { display: flex; align-items: flex-start; gap: 1rem; margin-bottom: 1rem; background: var(--panel-bg); padding: 1rem; border-radius: 1rem; border: 1px solid var(--panel-border); }
         .iskri-avatar { font-size: 3rem; animation: float 3s ease-in-out infinite; text-shadow: 0 0 15px rgba(59, 130, 246, 0.5); }
         @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
-        .iskri-bubble { flex: 1; background: var(--bg-color); padding: 1rem; border-radius: 1rem; border: 1px solid var(--accent-blue); position: relative; font-size: 1.1rem; line-height: 1.4; min-height: 60px;}
+        .iskri-bubble { flex: 1; background: var(--bg-color); padding: 1rem; border-radius: 1rem; border: 1px solid var(--accent-blue); position: relative; font-size: clamp(0.95rem, 2.3vw, 1.1rem); line-height: 1.4; min-height: 60px;}
         .iskri-bubble::before { content: ''; position: absolute; left: -10px; top: 15px; border-width: 10px 10px 10px 0; border-style: solid; border-color: transparent var(--accent-blue) transparent transparent; }
 
         .workspace { flex: 1; display: flex; flex-direction: column; min-height: 0; gap: 1rem; }
@@ -89,21 +90,21 @@
             gap: 0;
             background-color: var(--grid-bg);
             background-image: linear-gradient(var(--grid-line) 1px, transparent 1px), linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
-            background-size: 40px 40px;
+            background-size: var(--cell-size) var(--cell-size);
             background-position: 0 0;
-            padding: 40px;
+            padding: var(--cell-size);
             border: 2px solid var(--accent-blue);
             border-radius: 8px;
             box-shadow: inset 0 0 15px rgba(0,0,0,0.05);
         }
 
         .m-cell {
-            width: 40px; height: 40px; display: flex; justify-content: center; align-items: center;
-            font-size: 1.8rem; font-weight: bold; color: #0f172a; position: relative; font-family: monospace;
+            width: var(--cell-size); height: var(--cell-size); display: flex; justify-content: center; align-items: center;
+            font-size: calc(var(--cell-size) * 0.7); font-weight: bold; color: #0f172a; position: relative; font-family: monospace;
         }
 
         .m-input {
-            width: 38px; height: 38px; border: 2px dashed #94a3b8; background: rgba(248, 250, 252, 0.85); border-radius: 4px;
+            width: calc(var(--cell-size) - 2px); height: calc(var(--cell-size) - 2px); border: 2px dashed #94a3b8; background: rgba(248, 250, 252, 0.85); border-radius: 4px;
             display: flex; justify-content: center; align-items: center; cursor: pointer; color: var(--accent-blue);
             z-index: 5;
         }
@@ -112,7 +113,7 @@
         .m-input.success { border-color: var(--accent-green); color: var(--accent-green); border-style: solid; }
 
         .m-carry {
-            width: 24px; height: 24px; font-size: 1rem; border: 1px solid #cbd5e1; border-radius: 50%;
+            width: calc(var(--cell-size) * 0.6); height: calc(var(--cell-size) * 0.6); font-size: calc(var(--cell-size) * 0.4); border: 1px solid #cbd5e1; border-radius: 50%;
             margin: auto; background: white; cursor: pointer; color: #64748b;
             display: flex; justify-content: center; align-items: center; z-index: 5;
         }
@@ -127,13 +128,13 @@
 
         .controls-area { display: flex; gap: 1rem; padding: 0.5rem 0; }
         .numpad { display: grid; grid-template-columns: repeat(6, 1fr); gap: 0.5rem; flex: 1; }
-        .num-key { background: var(--panel-bg); color: white; border: 2px solid var(--panel-border); border-radius: 0.5rem; font-size: 1.5rem; font-weight: bold; padding: 0.75rem 0; cursor: pointer; }
+        .num-key { background: var(--panel-bg); color: white; border: 2px solid var(--panel-border); border-radius: 0.5rem; font-size: clamp(1.25rem, 4vw, 1.7rem); font-weight: bold; padding: clamp(0.6rem, 2vw, 1rem) 0; cursor: pointer; min-height: 48px; }
         .num-key:active { background: var(--accent-blue); border-color: var(--accent-blue); }
 
-        .action-panel { display: flex; flex-direction: column; gap: 0.5rem; width: 120px; }
+        .action-panel { display: flex; flex-direction: column; gap: 0.5rem; width: clamp(96px, 22vw, 140px); }
 
         .choice-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem; }
-        .choice-btn { background: var(--panel-bg); padding: 1.5rem; border: 2px solid var(--panel-border); border-radius: 1rem; font-size: 1.2rem; color: white; cursor: pointer; transition: all 0.2s; }
+        .choice-btn { background: var(--panel-bg); padding: clamp(1rem, 4vw, 1.5rem); border: 2px solid var(--panel-border); border-radius: 1rem; font-size: clamp(1rem, 3vw, 1.2rem); color: white; cursor: pointer; transition: all 0.2s; }
         .choice-btn:hover { border-color: var(--accent-blue); }
         .choice-btn.selected { background: var(--accent-blue); border-color: var(--accent-blue); }
 
@@ -143,7 +144,7 @@
         .start-scroll { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 1.25rem; max-width: 500px; margin: 0 auto; width: 100%; padding: 0.25rem 0.1rem 1rem; -webkit-overflow-scrolling: touch; }
         .start-cta { flex: 0 0 auto; max-width: 500px; margin: 0 auto; width: 100%; display: flex; flex-direction: column; gap: 0.5rem; padding-top: 0.75rem; }
         .btn-cta {
-            width: 100%; padding: 1.25rem; font-size: 1.4rem; border-radius: 1rem;
+            width: 100%; padding: clamp(1rem, 4vw, 1.25rem); font-size: clamp(1.15rem, 4.5vw, 1.4rem); border-radius: 1rem;
             animation: cta-glow 2.4s ease-in-out infinite;
         }
         @keyframes cta-glow {
@@ -170,15 +171,16 @@
         .stat-row:last-child { border: none; }
 
         /* --- Responsive tuning: phone / tablet / laptop --- */
+        /* The math grid, buttons and text scale fluidly via --cell-size and clamp(),
+           so behaviour is consistent across the whole range, not just at fixed breakpoints.
+           These breakpoints only handle structural layout changes (stacking, columns). */
 
-        /* Small phones */
+        /* Small phones: stack numeric keypad and action buttons so both stay full-width and reachable */
         @media (max-width: 380px) {
             .numpad { grid-template-columns: repeat(5, 1fr); }
             .controls-area { flex-direction: column; }
             .action-panel { flex-direction: row; width: 100%; }
             .action-panel .btn { flex: 1; }
-            .math-grid { transform: scale(0.65); transform-origin: top center; }
-            .iskri-bubble { font-size: 0.95rem; }
             .iskri-avatar { font-size: 2.2rem; }
             #site-footer { font-size: 0.58rem; }
         }
@@ -187,23 +189,12 @@
         @media (min-width: 381px) and (max-width: 600px) {
             .numpad { grid-template-columns: repeat(5, 1fr); }
             .choice-grid { grid-template-columns: 1fr; }
-            .math-grid { transform: scale(0.8); transform-origin: top center; }
-            .iskri-bubble { font-size: 1rem; }
             .iskri-avatar { font-size: 2.5rem; }
         }
 
-        /* Tablets */
-        @media (min-width: 601px) and (max-width: 900px) {
-            .math-grid { transform: scale(0.95); transform-origin: top center; }
-            .num-key { font-size: 1.6rem; padding: 0.9rem 0; }
-        }
-
-        /* Laptops / desktops */
+        /* Laptops / desktops: a little extra breathing room */
         @media (min-width: 901px) {
             .screen { max-width: 1100px; }
-            .math-grid { transform: scale(1.1); transform-origin: center; }
-            .num-key { font-size: 1.7rem; padding: 1rem 0; }
-            .btn { font-size: 1.15rem; }
         }
 
         /* Short / landscape viewports: keep controls reachable, shrink chrome */
@@ -592,8 +583,8 @@
             renderGrid: function(cells, cols, rows) {
                 const c = document.getElementById('grid-container');
                 c.innerHTML = '';
-                c.style.gridTemplateColumns = `repeat(${cols}, 40px)`;
-                c.style.gridTemplateRows = `repeat(${rows}, 40px)`;
+                c.style.gridTemplateColumns = `repeat(${cols}, var(--cell-size))`;
+                c.style.gridTemplateRows = `repeat(${rows}, var(--cell-size))`;
                 c.classList.remove('hidden-visually');
 
                 cells.forEach(cell => {
