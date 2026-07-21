@@ -179,6 +179,21 @@
         .stat-row { display: flex; justify-content: space-between; padding: 0.75rem; border-bottom: 1px solid var(--panel-border); }
         .stat-row:last-child { border: none; }
 
+        /* Rules modal */
+        .modal-overlay {
+            display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.75);
+            z-index: 100; justify-content: center; align-items: center; padding: 1rem;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal-card {
+            background: var(--panel-bg); border: 1px solid var(--panel-border); border-radius: 1rem;
+            padding: 1.5rem; max-width: 560px; width: 100%; max-height: 85vh; overflow-y: auto;
+        }
+        .rule-row { display: flex; gap: 0.75rem; align-items: flex-start; margin-bottom: 1rem; }
+        .rule-row .rule-icon { font-size: 1.4rem; line-height: 1; flex: 0 0 auto; }
+        .rule-row .rule-text { font-size: clamp(0.9rem, 2.2vw, 1rem); line-height: 1.45; }
+        .rule-row .rule-text strong { color: var(--accent-blue); }
+
         /* --- Responsive tuning: phone / tablet / laptop --- */
         /* The math grid, buttons and text scale fluidly via --cell-size and clamp(),
            so behaviour is consistent across the whole range, not just at fixed breakpoints.
@@ -259,7 +274,10 @@
 
         <div class="start-cta">
             <button class="btn btn-green btn-cta" id="btn-start">🚀 ЗАПОЧНИ МИСИЯ</button>
-            <button id="btn-settings" style="background:transparent; border:none; color:var(--text-muted); padding:0.6rem; cursor:pointer;">⚙️ Настройки (задръж)</button>
+            <div style="display:flex; justify-content:center; gap:1rem;">
+                <button id="btn-rules" style="background:transparent; border:none; color:var(--text-muted); padding:0.6rem; cursor:pointer; text-decoration:underline;">❓ Как се играе?</button>
+                <button id="btn-settings" style="background:transparent; border:none; color:var(--text-muted); padding:0.6rem; cursor:pointer;">⚙️ Настройки (задръж)</button>
+            </div>
         </div>
 
         <img class="corner-logo" src="logo-vb.png" alt="" aria-hidden="true">
@@ -330,6 +348,42 @@
     </div>
 
     </div><!-- /app-container -->
+
+    <div id="rules-modal" class="modal-overlay">
+        <div class="modal-card">
+            <div class="iskri-container" style="margin-bottom:1rem;">
+                <div class="iskri-avatar" style="font-size:2.5rem;">🤖</div>
+                <div class="iskri-bubble">Здравей! Аз съм Искри, твоят навигатор в света на математиката. Ето как играем:</div>
+            </div>
+
+            <div class="rule-row">
+                <div class="rule-icon">🎯</div>
+                <div class="rule-text"><strong>Мисия</strong> = 5 задачи. За всяка решена задача печелиш ⚡ енергия, а в края - бонус!</div>
+            </div>
+            <div class="rule-row">
+                <div class="rule-icon">🔍</div>
+                <div class="rule-text">За всяка задача първо избираш <strong>какво е действието</strong> (+, −, ×, ÷), после решаваш стъпка по стъпка направо в квадратчетата на решетката.</div>
+            </div>
+            <div class="rule-row">
+                <div class="rule-icon">✏️</div>
+                <div class="rule-text">Малките кръгчета и квадратчета за пренасяне, заемане или чернова са <strong>по избор</strong> - използвай ги, ако ти помагат, но не се проверяват.</div>
+            </div>
+            <div class="rule-row">
+                <div class="rule-icon">✅</div>
+                <div class="rule-text">Когато си готов, натисни <strong>„Провери“</strong>. Грешните полета светват в червено, за да ги поправиш.</div>
+            </div>
+            <div class="rule-row">
+                <div class="rule-icon">🧭</div>
+                <div class="rule-text">Режим на помощ: <strong>С Навигатор</strong> - Искри те води през всяка стъпка; <strong>С Подсказка</strong> - помощ само при нужда; <strong>Самостоятелно</strong> - решаваш сам.</div>
+            </div>
+            <div class="rule-row">
+                <div class="rule-icon">🏆</div>
+                <div class="rule-text">Нивата стават все по-трудни - от прости числа до писмено умножение и деление с опашка. Ниво 7 разбърква всичко научено!</div>
+            </div>
+
+            <button class="btn btn-green" id="btn-rules-close" style="width:100%; margin-top:0.5rem;">Разбрах, да играем! 🚀</button>
+        </div>
+    </div>
 
     <footer id="site-footer">
         Ресурсът е създаден по идея и методическа разработка на Валя Витковска с техническа помощ от изкуствен интелект. Съдържанието е проверено и редактирано от автора.
@@ -795,6 +849,11 @@
                 UI.updateEnergy();
                 document.body.dataset.screen = 'screen-start';
 
+                // Rules modal
+                document.getElementById('btn-rules').onclick = () => this.openRules();
+                document.getElementById('btn-rules-close').onclick = () => this.closeRules();
+                if (!localStorage.getItem('MathNavRulesSeen')) this.openRules();
+
                 // Bind Start Screen
                 document.querySelectorAll('.mode-btn').forEach(b => {
                     b.onclick = (e) => {
@@ -847,6 +906,15 @@
                 document.getElementById('btn-settings').ontouchend = () => clearTimeout(holdTimer);
 
                 document.getElementById('btn-parent-close').onclick = () => UI.showScreen('screen-start');
+            },
+
+            openRules: function() {
+                document.getElementById('rules-modal').classList.add('active');
+            },
+
+            closeRules: function() {
+                document.getElementById('rules-modal').classList.remove('active');
+                localStorage.setItem('MathNavRulesSeen', '1');
             },
 
             openParentScreen: function() {
